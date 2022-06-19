@@ -16,6 +16,5 @@ void *bump_alloc(u32 size) {
 __attribute__((export_name("bump_alloc_src_code")))
 void *bump_alloc_src_code(u32 size) {
 	alloc_ptr = (u8 *)0x4;
-	bump_alloc(size);
-	return alloc_ptr;
+	return bump_alloc(size);
 }
