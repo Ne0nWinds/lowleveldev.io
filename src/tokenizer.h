@@ -13,6 +13,7 @@ typedef struct token_list token_list;
 
 struct token {
 	u32 token_type;
+	u32 value;
 };
 
 struct token_list {
