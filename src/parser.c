@@ -40,9 +40,9 @@ u32 get_precedence(node_type type) {
 }
 
 node *expr() {
-	node *primary_stack = bump_alloc(sizeof(node));
+	node *primary_stack = 0;
 	primary_stack->type = 0;
-	node *op_stack = bump_alloc(sizeof(node));
+	node *op_stack = 0;
 	op_stack->type = 0;
 
 	node *top_node = 0;
