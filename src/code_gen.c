@@ -31,6 +31,7 @@ compile_result *gen_code(node *ast) {
 }
 
 void gen_expr(node *n) {
+	if (!n) return;
 
 	if (n->type == NODE_INT) {
 		char int_code[] = "\t\ti32.const ";
@@ -52,6 +53,16 @@ void gen_expr(node *n) {
 		} break;
 		case NODE_MINUS: {
 			char int_code[] = "\t\ti32.sub\n";
+			__builtin_memcpy(c, int_code, len(int_code) - 1);
+			c += len(int_code) - 1;
+		} break;
+		case NODE_MULTIPLY: {
+			char int_code[] = "\t\ti32.mul\n";
+			__builtin_memcpy(c, int_code, len(int_code) - 1);
+			c += len(int_code) - 1;
+		} break;
+		case NODE_DIVIDE: {
+			char int_code[] = "\t\ti32.div_u\n";
 			__builtin_memcpy(c, int_code, len(int_code) - 1);
 			c += len(int_code) - 1;
 		} break;

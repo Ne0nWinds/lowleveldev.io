@@ -32,31 +32,62 @@ node *expr_stmt() {
 enum {
 	PRECEDENCE_ADD = 1,
 	PRECEDENCE_MUL,
+	NO_PRECEDENCE
 };
 
 u32 get_precedence(node_type type) {
-	if (type == NODE_MULTIPLY) return PRECEDENCE_MUL;
+	if (type == NODE_MULTIPLY || type == NODE_DIVIDE) return PRECEDENCE_MUL;
 	return PRECEDENCE_ADD;
 }
 
-node *expr() {
-	node *primary_stack = 0;
-	primary_stack->type = 0;
-	node *op_stack = 0;
-	op_stack->type = 0;
+static node *primary_stack;
+static node *op_stack;
+static node *top_node;
 
-	node *top_node = 0;
+static void unroll_stack() {
+	node *primary = primary_stack;
+	primary_stack = primary_stack->right;
+
+	node *op_node = op_stack;
+	op_stack = op_stack->right;
+
+	op_node->right = primary;
+
+	node *local_top = op_node;
+
+	while (op_stack) {
+		primary = primary_stack;
+		primary_stack = primary_stack->right;
+
+		op_node->left = primary;
+
+		op_node = op_stack;
+		op_stack = op_stack->right;
+
+		op_node->right = local_top;
+		local_top = op_node;
+	}
+
+	local_top->left = top_node;
+	top_node = local_top;
+}
+
+node *expr() {
+	primary_stack = 0;
+	op_stack = 0;
+
+	if (current_token->token_type == TOKEN_INT) {
+		node *primary_node = bump_alloc(sizeof(node));
+		primary_node->type = NODE_INT;
+		primary_node->value = current_token->value;
+		top_node = primary_node;
+		current_token += 1;
+	} else {
+		error_occurred = true;
+		return 0;
+	}
 
 	for (;;) {
-		if (current_token->token_type == TOKEN_INT) {
-			node *primary_node = bump_alloc(sizeof(node));
-			primary_node->type = NODE_INT;
-			primary_node->value = current_token->value;
-			primary_node->left = primary_stack;
-			primary_stack = primary_node;
-			current_token += 1;
-		} else break;
-
 		node_type type = 0;
 
 		if (current_token->token_type == '+') {
@@ -67,47 +98,40 @@ node *expr() {
 			type = NODE_MINUS;
 		}
 
-		// if (current_token->token_type == '*') {
-		// 	type = NODE_MULTIPLY;
-		// }
+		if (current_token->token_type == '*') {
+			type = NODE_MULTIPLY;
+		}
 
-		// if (current_token->token_type == '/') {
-		// 	type = NODE_DIVIDE;
-		// }
+		if (current_token->token_type == '/') {
+			type = NODE_DIVIDE;
+		}
 
 		if (!type) break;
 
+		u32 prev_prec = (op_stack->type != 0) ? get_precedence(op_stack->type) : 0;
+		u32 current_prec = get_precedence(type);
+
+		if (current_prec < prev_prec) {
+			unroll_stack();
+		}
+
 		node *new_node = bump_alloc(sizeof(node));
 		new_node->type = type;
-		new_node->left = op_stack;
+		new_node->right = op_stack;
 		op_stack = new_node;
 		current_token += 1;
+
+		if (current_token->token_type == TOKEN_INT) {
+			node *primary_node = bump_alloc(sizeof(node));
+			primary_node->type = NODE_INT;
+			primary_node->value = current_token->value;
+			primary_node->right = primary_stack;
+			primary_stack = primary_node;
+			current_token += 1;
+		} else break;
 	}
 
-	node *op_node = op_stack;
-	op_stack = op_stack->left;
-
-	node *primary_left = primary_stack->left;
-	node *primary_right = primary_stack;
-	primary_stack = primary_stack->left->left;
-
-	op_node->left = primary_left;
-	op_node->right = primary_right;
-
-	top_node = op_node;
-
-	while (op_stack->type != 0) {
-		op_node = op_stack;
-		op_stack = op_stack->left;
-
-		primary_left = primary_stack;
-		primary_stack = primary_stack->left;
-
-		op_node->left = primary_left;
-		op_node->right = top_node;
-
-		top_node = op_node;
-	}
+	unroll_stack();
 
 	return top_node;
 }
