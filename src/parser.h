@@ -14,6 +14,7 @@ enum node_type {
 typedef struct node node;
 struct node {
 	node_type type;
+	node *next;
 
 	u32 value;
 

@@ -87,10 +87,10 @@ node *expr() {
 
 		if (current_prec < prev_prec) {
 			node *primary = primary_stack;
-			primary_stack = primary_stack->right;
+			primary_stack = primary_stack->next;
 
 			node *op_node = op_stack;
-			op_stack = op_stack->right;
+			op_stack = op_stack->next;
 
 			op_node->right = primary;
 
@@ -98,12 +98,12 @@ node *expr() {
 
 			while (op_stack) {
 				primary = primary_stack;
-				primary_stack = primary_stack->right;
+				primary_stack = primary_stack->next;
 
 				op_node->left = primary;
 
 				op_node = op_stack;
-				op_stack = op_stack->right;
+				op_stack = op_stack->next;
 
 				op_node->right = local_top;
 				local_top = op_node;
@@ -115,29 +115,31 @@ node *expr() {
 
 		node *new_node = bump_alloc(sizeof(node));
 		new_node->type = type;
-		new_node->right = op_stack;
+		new_node->next = op_stack;
 		op_stack = new_node;
 		current_token += 1;
 
 		if (current_token->token_type == '(') {
 			current_token += 1;
-			top_node = expr();
+			node *local_top = expr();
+			local_top->next = primary_stack;
+			primary_stack = local_top;
 			expect_token(')');
 		} else if (current_token->token_type == TOKEN_INT) {
 			node *primary_node = bump_alloc(sizeof(node));
 			primary_node->type = NODE_INT;
 			primary_node->value = current_token->value;
-			primary_node->right = primary_stack;
+			primary_node->next = primary_stack;
 			primary_stack = primary_node;
 			current_token += 1;
 		} else break;
 	}
 
 	node *primary = primary_stack;
-	primary_stack = primary_stack->right;
+	primary_stack = primary_stack->next;
 
 	node *op_node = op_stack;
-	op_stack = op_stack->right;
+	op_stack = op_stack->next;
 
 	op_node->right = primary;
 
@@ -145,12 +147,12 @@ node *expr() {
 
 	while (op_stack) {
 		primary = primary_stack;
-		primary_stack = primary_stack->right;
+		primary_stack = primary_stack->next;
 
 		op_node->left = primary;
 
 		op_node = op_stack;
-		op_stack = op_stack->right;
+		op_stack = op_stack->next;
 
 		op_node->right = local_top;
 		local_top = op_node;
