@@ -21,7 +21,7 @@ compile_result *gen_code(node *ast) {
 	*c++ = ')';
 	*c++ = '\n';
 	*c++ = ')';
-	*c++ = '\0';
+	*c = '\0';
 
 	bump_alloc(c - code);
 	compile_result *result = bump_alloc(sizeof(compile_result));
