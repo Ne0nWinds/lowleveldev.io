@@ -6,7 +6,7 @@ editor.resize();
 
 window.compiler = compiler;
 
-document.getElementById("run").onclick = () => {
+document.getElementById("run").onclick = async () => {
 	const text_encoder = new TextEncoder('utf-8');
 
 	const editorText = editor.getValue();
@@ -18,8 +18,15 @@ document.getElementById("run").onclick = () => {
 	if (!compile_result_ptr) return;
 
 	const compile_result = new Uint32Array(compiler.memory.buffer, compile_result_ptr, 2);
+	const code = new Uint8Array(compiler.memory.buffer, compile_result[1], compile_result[0]);
+	console.log(code);
 
-	const text_decoder = new TextDecoder('utf-8');
-	const output = text_decoder.decode(new Uint8Array(compiler.memory.buffer, compile_result[1], compile_result[0]));
-	console.log(output);
+	if (code[0] == 40) {
+		const text_decoder = new TextDecoder('utf-8');
+		const output = text_decoder.decode(code);
+		console.log(output);
+	} else {
+		const output = await WebAssembly.instantiate(code);
+		console.log(output.instance.exports.main());
+	}
 };

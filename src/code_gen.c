@@ -1,4 +1,5 @@
 #include "code_gen.h"
+#include "code_gen_wasm.h"
 
 static node **stack;
 static u32 stack_size;
@@ -11,17 +12,17 @@ compile_result *gen_code(node *ast) {
 	u8 *code = bump_alloc(0);
 	c = code;
 
-	char boilerplate[] = "(module\n\t(func (result i32)\n";
-	__builtin_memcpy(c, boilerplate, len(boilerplate) - 1);
-	c += len(boilerplate) - 1;
+	c += create_module(c);
 
+	c += create_main_function(c);
+
+	u8 *code_section_start = c;
 	gen_expr(ast);
+	c += end_code_block(c);
 
-	*c++ = '\t';
-	*c++ = ')';
-	*c++ = '\n';
-	*c++ = ')';
-	*c = '\0';
+	c += create_code_section(code_section_start, c - code_section_start);
+
+	c += end_module(c);
 
 	bump_alloc(c - code);
 	compile_result *result = bump_alloc(sizeof(compile_result));
@@ -34,11 +35,12 @@ void gen_expr(node *n) {
 	if (!n) return;
 
 	if (n->type == NODE_INT) {
-		char int_code[] = "\t\ti32.const ";
-		__builtin_memcpy(c, int_code, len(int_code) - 1);
-		c += len(int_code) - 1;
-		*c++ = n->value + '0';
-		*c++ = '\n';
+		// char int_code[] = "\t\ti32.const ";
+		// __builtin_memcpy(c, int_code, len(int_code) - 1);
+		// c += len(int_code) - 1;
+		// *c++ = n->value + '0';
+		// *c++ = '\n';
+		c += i32_const(c, n->value);
 		return;
 	}
 
@@ -47,24 +49,19 @@ void gen_expr(node *n) {
 
 	switch (n->type) {
 		case NODE_PLUS: {
-			char int_code[] = "\t\ti32.add\n";
-			__builtin_memcpy(c, int_code, len(int_code) - 1);
-			c += len(int_code) - 1;
+			c += i32_add(c);
 		} break;
 		case NODE_MINUS: {
-			char int_code[] = "\t\ti32.sub\n";
-			__builtin_memcpy(c, int_code, len(int_code) - 1);
-			c += len(int_code) - 1;
+			c += i32_sub(c);
 		} break;
 		case NODE_MULTIPLY: {
-			char int_code[] = "\t\ti32.mul\n";
-			__builtin_memcpy(c, int_code, len(int_code) - 1);
-			c += len(int_code) - 1;
+			c += i32_mul(c);
 		} break;
 		case NODE_DIVIDE: {
-			char int_code[] = "\t\ti32.div_u\n";
-			__builtin_memcpy(c, int_code, len(int_code) - 1);
-			c += len(int_code) - 1;
+			c += i32_div_s(c);
+			// char int_code[] = "\t\ti32.div_u\n";
+			// __builtin_memcpy(c, int_code, len(int_code) - 1);
+			// c += len(int_code) - 1;
 		} break;
 	}
 }
