@@ -31,6 +31,20 @@ enum {
 	I32_REM_U = 0x70,
 };
 
+
+// leb128 functions can probably be optimized
+u8 leb128_encode_len(i32 value) {
+	u32 length = 0;
+	u8 byte;
+	do {
+		byte = value & 0x7F;
+		value >>= 7;
+		++length;
+	} while (value);
+	if (byte & 0x40) ++length;
+	return length;
+}
+
 u8 leb128_encode(u8 *c, i32 value) {
 	u8 byte = value & 0x7F;
 	u32 length = 1;
@@ -113,15 +127,16 @@ u8 create_main_function(u8 *c) {
 }
 
 u8 create_code_section(u8 *c, u32 length) {
-	u32 calculated_header_byte_length = 5;
+	u32 byte_len2 = leb128_encode_len(length + 1);
+	u32 byte_len1 = leb128_encode_len(length + 2 + byte_len2);
+	u32 calculated_header_byte_length = byte_len2 + byte_len1 + 3;
 
-	u8 *x = c + calculated_header_byte_length;
-	__builtin_memcpy(x, c, length);
+	__builtin_memcpy(c + calculated_header_byte_length, c, length);
 
 	*c++ = SECTION_CODE;
-	*c++ = length + 3;
+	c += leb128_encode(c, length + 2 + byte_len2);
 	*c++ = 1;
-	*c++ = length + 1;
+	c += leb128_encode(c, length + 1);
 	*c++ = 0;
 
 	return calculated_header_byte_length;
