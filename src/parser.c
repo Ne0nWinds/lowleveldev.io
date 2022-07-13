@@ -124,6 +124,16 @@ node *expr() {
 		op_stack = new_node;
 		current_token += 1;
 
+		if (current_token->token_type == '-') {
+			current_token += 1;
+			node *unary_node = bump_alloc(sizeof(node));
+			unary_node->type = NODE_NEGATE;
+			unary_node->right = primary();
+			unary_node->next = primary_stack;
+			primary_stack = unary_node;
+			continue;
+		}
+
 		node *primary_node = primary();
 		primary_node->next = primary_stack;
 		primary_stack = primary_node;

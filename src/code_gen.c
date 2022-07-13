@@ -35,12 +35,14 @@ void gen_expr(node *n) {
 	if (!n) return;
 
 	if (n->type == NODE_INT) {
-		// char int_code[] = "\t\ti32.const ";
-		// __builtin_memcpy(c, int_code, len(int_code) - 1);
-		// c += len(int_code) - 1;
-		// *c++ = n->value + '0';
-		// *c++ = '\n';
 		c += i32_const(c, n->value);
+		return;
+	}
+
+	if (n->type == NODE_NEGATE) {
+		gen_expr(n->right);
+		c += i32_const(c, 2);
+		c += i32_mul(c);
 		return;
 	}
 
@@ -59,9 +61,6 @@ void gen_expr(node *n) {
 		} break;
 		case NODE_DIVIDE: {
 			c += i32_div_s(c);
-			// char int_code[] = "\t\ti32.div_u\n";
-			// __builtin_memcpy(c, int_code, len(int_code) - 1);
-			// c += len(int_code) - 1;
 		} break;
 	}
 }
