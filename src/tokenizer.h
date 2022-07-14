@@ -5,7 +5,11 @@
 typedef enum token_type token_type;
 
 enum token_type {
-	TOKEN_INT = 256
+	TOKEN_INT = 256,
+	TOKEN_EQ,
+	TOKEN_NE,
+	TOKEN_LE,
+	TOKEN_GE,
 };
 
 typedef struct token token;

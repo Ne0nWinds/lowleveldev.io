@@ -29,6 +29,19 @@ enum {
 	I32_DIV_U = 0x6E,
 	I32_REM_S = 0x6F,
 	I32_REM_U = 0x70,
+
+	I32_EQZ = 0x45,
+	I32_EQ = 0x46,
+	I32_NE = 0x47,
+	I32_LT_S = 0x48,
+	I32_LT_U = 0x49,
+	I32_GT_S = 0x4A,
+	I32_GT_U = 0x4B,
+
+	I32_LE_S = 0x4C,
+	I32_LE_U = 0x4D,
+	I32_GE_S = 0x4E,
+	I32_GE_U = 0x4F,
 };
 
 
@@ -176,6 +189,36 @@ u8 i32_mul(u8 *c) {
 
 u8 i32_div_s(u8 *c) {
 	*c = I32_DIV_S;
+	return 1;
+}
+
+u8 i32_eq(u8 *c) {
+	*c = I32_EQ;
+	return 1;
+}
+
+u8 i32_ne(u8 *c) {
+	*c = I32_NE;
+	return 1;
+}
+
+u8 i32_gt_s(u8 *c) {
+	*c = I32_GT_S;
+	return 1;
+}
+
+u8 i32_lt_s(u8 *c) {
+	*c = I32_LT_S;
+	return 1;
+}
+
+u8 i32_le_s(u8 *c) {
+	*c = I32_LE_S;
+	return 1;
+}
+
+u8 i32_ge_s(u8 *c) {
+	*c = I32_GE_S;
 	return 1;
 }
 

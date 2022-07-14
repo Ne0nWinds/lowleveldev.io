@@ -62,5 +62,23 @@ void gen_expr(node *n) {
 		case NODE_DIVIDE: {
 			c += i32_div_s(c);
 		} break;
+		case NODE_EQ: {
+			c += i32_eq(c);
+		} break;
+		case NODE_NE: {
+			c += i32_ne(c);
+		} break;
+		case NODE_GT: {
+			c += i32_gt_s(c);
+		} break;
+		case NODE_LT: {
+			c += i32_lt_s(c);
+		} break;
+		case NODE_GE: {
+			c += i32_ge_s(c);
+		} break;
+		case NODE_LE: {
+			c += i32_le_s(c);
+		} break;
 	}
 }

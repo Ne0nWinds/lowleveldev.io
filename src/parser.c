@@ -33,10 +33,13 @@ node *expr_stmt() {
 enum {
 	PRECEDENCE_ADD = 1,
 	PRECEDENCE_MUL,
-	NO_PRECEDENCE
+	PRECEDENCE_RELATIONAL,
+	PRECEDENCE_EQUALITY,
 };
 
 u32 get_precedence(node_type type) {
+	if (type == NODE_LT || type == NODE_LE || type == NODE_GT || type == NODE_GE) return PRECEDENCE_RELATIONAL;
+	if (type == NODE_EQ || type == NODE_NE) return PRECEDENCE_EQUALITY;
 	if (type == NODE_MULTIPLY || type == NODE_DIVIDE) return PRECEDENCE_MUL;
 	return PRECEDENCE_ADD;
 }
@@ -91,6 +94,30 @@ node *expr() {
 
 		if (current_token->token_type == '/') {
 			type = NODE_DIVIDE;
+		}
+
+		if (current_token->token_type == TOKEN_EQ) {
+			type = NODE_EQ;
+		}
+
+		if (current_token->token_type == TOKEN_NE) {
+			type = NODE_NE;
+		}
+
+		if (current_token->token_type == '<') {
+			type = NODE_LT;
+		}
+
+		if (current_token->token_type == '>') {
+			type = NODE_GT;
+		}
+
+		if (current_token->token_type == TOKEN_LE) {
+			type = NODE_LE;
+		}
+
+		if (current_token->token_type == TOKEN_GE) {
+			type = NODE_GE;
 		}
 
 		if (!type) break;

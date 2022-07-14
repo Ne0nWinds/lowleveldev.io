@@ -9,7 +9,13 @@ enum node_type {
 	NODE_MINUS,
 	NODE_MULTIPLY,
 	NODE_DIVIDE,
-	NODE_NEGATE
+	NODE_NEGATE,
+	NODE_EQ,
+	NODE_NE,
+	NODE_GT,
+	NODE_LT,
+	NODE_GE,
+	NODE_LE,
 };
 
 typedef struct node node;

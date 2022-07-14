@@ -28,6 +28,13 @@ u8 i32_const(u8 *c, i32 value) {
 	c += len(code) - 1;
 
 	u32 value_length = 0;
+	bool is_negative = value < 0;
+
+	if (is_negative) {
+		*c++ = '-';
+		value *= -1;
+	}
+
 	do {
 		c[value_length] = value % 10 + '0';
 		value_length += 1;
@@ -40,7 +47,7 @@ u8 i32_const(u8 *c, i32 value) {
 		c[value_length - 1 - i] = temp;
 	}
 
-	return len(code) - 1 + value_length;
+	return len(code) - 1 + value_length + is_negative;
 }
 
 u8 i32_add(u8 *c) {
@@ -63,6 +70,42 @@ u8 i32_mul(u8 *c) {
 
 u8 i32_div_s(u8 *c) {
 	static char code[] = "\n\ti32.div_s";
+	__builtin_memcpy(c, code, len(code) - 1);
+	return len(code) - 1;
+}
+
+u8 i32_eq(u8 *c) {
+	static char code[] = "\n\ti32.eq";
+	__builtin_memcpy(c, code, len(code) - 1);
+	return len(code) - 1;
+}
+
+u8 i32_ne(u8 *c) {
+	static char code[] = "\n\ti32.ne";
+	__builtin_memcpy(c, code, len(code) - 1);
+	return len(code) - 1;
+}
+
+u8 i32_gt_s(u8 *c) {
+	static char code[] = "\n\ti32.gt_s";
+	__builtin_memcpy(c, code, len(code) - 1);
+	return len(code) - 1;
+}
+
+u8 i32_lt_s(u8 *c) {
+	static char code[] = "\n\ti32.lt_s";
+	__builtin_memcpy(c, code, len(code) - 1);
+	return len(code) - 1;
+}
+
+u8 i32_le_s(u8 *c) {
+	static char code[] = "\n\ti32.le_s";
+	__builtin_memcpy(c, code, len(code) - 1);
+	return len(code) - 1;
+}
+
+u8 i32_ge_s(u8 *c) {
+	static char code[] = "\n\ti32.ge_s";
 	__builtin_memcpy(c, code, len(code) - 1);
 	return len(code) - 1;
 }

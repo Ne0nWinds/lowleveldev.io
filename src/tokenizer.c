@@ -3,6 +3,16 @@
 #define is_whitespace(c) (c == ' ' || c == '\r' || c == '\n' || c == '\t')
 #define is_digit(c) (c >= '0' && c <= '9')
 
+bool startwith(char *a, char *b) {
+	while (*b) {
+		if (*a != *b)
+			return false;
+		a += 1;
+		b += 1;
+	}
+	return true;
+}
+
 token_list tokenize(char *code, u32 length) {
 
 	token *tokens = bump_alloc(0);
@@ -24,6 +34,36 @@ token_list tokenize(char *code, u32 length) {
 				c += 1;
 			} while (is_digit(*c));
 			c -= 1;
+			token_count += 1;
+			continue;
+		}
+		
+		if (startwith(c, "==")) {
+			current_token->token_type = TOKEN_EQ;
+			c += 1;
+			token_count += 1;
+			continue;
+		}
+
+		if (startwith(c, "!=")) {
+			current_token->token_type = TOKEN_NE;
+			c += 1;
+			token_count += 1;
+			continue;
+		}
+
+		if (startwith(c, ">=")) {
+			current_token->token_type = TOKEN_GE;
+			c += 1;
+			token_count += 1;
+			continue;
+		}
+
+		if (startwith(c, "<=")) {
+			current_token->token_type = TOKEN_LE;
+			c += 1;
+			token_count += 1;
+			continue;
 		}
 
 		token_count += 1;
