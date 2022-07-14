@@ -42,20 +42,28 @@ u32 get_precedence(node_type type) {
 }
 
 node *primary() {
-	node *primary_node = 0;
+	if (current_token->token_type == '-') {
+		current_token += 1;
+		node *unary_node = bump_alloc(sizeof(node));
+		unary_node->type = NODE_NEGATE;
+		unary_node->right = primary();
+		return unary_node;
+	}
+
 	if (current_token->token_type == '(') {
 		current_token += 1;
-		primary_node = expr();
+		node *primary_node = expr();
 		expect_token(')');
 		return primary_node;
-	} else if (current_token->token_type == TOKEN_INT) {
-		primary_node = bump_alloc(sizeof(node));
+	}
+
+	if (current_token->token_type == TOKEN_INT) {
+		node *primary_node = bump_alloc(sizeof(node));
 		primary_node->type = NODE_INT;
 		primary_node->value = current_token->value;
 		current_token += 1;
 		return primary_node;
 	}
-	return primary_node;
 }
 
 node *expr() {
@@ -123,16 +131,6 @@ node *expr() {
 		new_node->next = op_stack;
 		op_stack = new_node;
 		current_token += 1;
-
-		if (current_token->token_type == '-') {
-			current_token += 1;
-			node *unary_node = bump_alloc(sizeof(node));
-			unary_node->type = NODE_NEGATE;
-			unary_node->right = primary();
-			unary_node->next = primary_stack;
-			primary_stack = unary_node;
-			continue;
-		}
 
 		node *primary_node = primary();
 		primary_node->next = primary_stack;

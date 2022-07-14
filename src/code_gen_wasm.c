@@ -46,10 +46,22 @@ u8 leb128_encode_len(i32 value) {
 }
 
 u8 leb128_encode(u8 *c, i32 value) {
-	u8 byte = value & 0x7F;
 	u32 length = 1;
+	u8 byte = value & 0x7F;
 	*c = byte;
 	value >>= 7;
+
+	if (value < 0) {
+		while (value != -1 && !(byte & 0x40)) {
+			*c |= 0x80;
+			c += 1;
+			byte = value & 0x7F;
+			value >>= 7;
+			*c = byte;
+			length += 1;
+		}
+		return length;
+	}
 
 	while (value) {
 		*c |= 0x80;

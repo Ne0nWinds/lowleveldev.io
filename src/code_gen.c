@@ -41,7 +41,7 @@ void gen_expr(node *n) {
 
 	if (n->type == NODE_NEGATE) {
 		gen_expr(n->right);
-		c += i32_const(c, 2);
+		c += i32_const(c, -1);
 		c += i32_mul(c);
 		return;
 	}
