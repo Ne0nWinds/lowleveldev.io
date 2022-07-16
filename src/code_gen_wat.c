@@ -110,6 +110,12 @@ u8 i32_ge_s(u8 *c) {
 	return len(code) - 1;
 }
 
+u8 drop(u8 *c) {
+	static char code[] = "\n\tdrop";
+	__builtin_memcpy(c, code, len(code) - 1);
+	return len(code) - 1;
+}
+
 u8 end_code_block(u8 *c) {
 	c[0] = '\n';
 	c[1] = ')';

@@ -20,3 +20,5 @@ u8 i32_gt_s(u8 *c);
 u8 i32_lt_s(u8 *c);
 u8 i32_le_s(u8 *c);
 u8 i32_ge_s(u8 *c);
+
+u8 drop(u8 *c);

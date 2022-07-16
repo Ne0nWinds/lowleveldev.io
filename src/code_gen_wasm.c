@@ -42,6 +42,8 @@ enum {
 	I32_LE_U = 0x4D,
 	I32_GE_S = 0x4E,
 	I32_GE_U = 0x4F,
+
+	DROP = 0x1A,
 };
 
 
@@ -219,6 +221,11 @@ u8 i32_le_s(u8 *c) {
 
 u8 i32_ge_s(u8 *c) {
 	*c = I32_GE_S;
+	return 1;
+}
+
+u8 drop(u8 *c) {
+	*c = DROP;
 	return 1;
 }
 

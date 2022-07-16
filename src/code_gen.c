@@ -17,7 +17,16 @@ compile_result *gen_code(node *ast) {
 	c += create_main_function(c);
 
 	u8 *code_section_start = c;
-	gen_expr(ast);
+
+	node *current_expr = ast;
+	
+	while (current_expr->next) {
+		gen_expr(current_expr);
+		c += drop(c);
+		current_expr = current_expr->next;
+	}
+	gen_expr(current_expr);
+
 	c += end_code_block(c);
 
 	c += create_code_section(code_section_start, c - code_section_start);

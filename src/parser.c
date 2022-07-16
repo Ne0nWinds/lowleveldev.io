@@ -13,8 +13,15 @@ node *parse_tokens(token_list tokens) {
 	error_occurred = false;
 	current_token = tokens.tokens;
 
-	node *n = expr_stmt();
-	return (error_occurred) ? 0 : n;
+	node *head = expr_stmt();
+	node *current = head;
+	while (!error_occurred && current_token->token_type != 0) {
+		current->next = expr_stmt();
+		current = current->next;
+	}
+	current->next = 0;
+
+	return (error_occurred) ? 0 : head;
 }
 
 void expect_token(token_type t) {
