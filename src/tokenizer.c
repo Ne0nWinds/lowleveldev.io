@@ -3,7 +3,8 @@
 #define is_whitespace(c) (c == ' ' || c == '\r' || c == '\n' || c == '\t')
 #define is_digit(c) (c >= '0' && c <= '9')
 
-bool startwith(char *a, char *b) {
+// TODO: simd
+bool startswith(char *a, char *b) {
 	while (*b) {
 		if (*a != *b)
 			return false;
@@ -38,28 +39,28 @@ token_list tokenize(char *code, u32 length) {
 			continue;
 		}
 		
-		if (startwith(c, "==")) {
+		if (startswith(c, "==")) {
 			current_token->token_type = TOKEN_EQ;
 			c += 1;
 			token_count += 1;
 			continue;
 		}
 
-		if (startwith(c, "!=")) {
+		if (startswith(c, "!=")) {
 			current_token->token_type = TOKEN_NE;
 			c += 1;
 			token_count += 1;
 			continue;
 		}
 
-		if (startwith(c, ">=")) {
+		if (startswith(c, ">=")) {
 			current_token->token_type = TOKEN_GE;
 			c += 1;
 			token_count += 1;
 			continue;
 		}
 
-		if (startwith(c, "<=")) {
+		if (startswith(c, "<=")) {
 			current_token->token_type = TOKEN_LE;
 			c += 1;
 			token_count += 1;

@@ -13,7 +13,8 @@ node *parse_tokens(token_list tokens) {
 	error_occurred = false;
 	current_token = tokens.tokens;
 
-	return expr_stmt();
+	node *n = expr_stmt();
+	return (error_occurred) ? 0 : n;
 }
 
 void expect_token(token_type t) {
@@ -67,6 +68,9 @@ node *primary() {
 		current_token += 1;
 		return primary_node;
 	}
+
+	error_occurred = true;
+	return 0;
 }
 
 node *expr() {
@@ -77,7 +81,7 @@ node *expr() {
 	top_node = primary();
 	if (!top_node) return 0;
 
-	for (;;) {
+	while (!error_occurred) {
 		node_type type = 0;
 
 		if (current_token->token_type == '+') {
@@ -170,6 +174,8 @@ node *expr() {
 		primary_node->next = primary_stack;
 		primary_stack = primary_node;
 	}
+
+	if (error_occurred) return 0;
 
 	node *primary = primary_stack;
 	primary_stack = primary_stack->next;

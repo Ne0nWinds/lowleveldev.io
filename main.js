@@ -26,6 +26,7 @@ document.getElementById("run").onclick = async () => {
 
 	const code = compile(editorText);
 	console.log(code);
+	if (code == null) return;
 
 	if (code[0] == 40) {
 		const text_decoder = new TextDecoder('utf-8');
@@ -47,9 +48,9 @@ const test_cases = [
 	'1 + 5 * 5;', 26,
 	'(1 + 5) * 5;', 30,
 	'((1 + 5) * 5);', 30,
-	'-1', -1,
-	'-1 * -1', 1,
-	'-2048', -2048,
+	'-1;', -1,
+	'-1 * -1;', 1,
+	'-2048;', -2048,
 	'-(50 + 50 * 2);', -150,
 	'-(50 + 50 * 2) + 75;', -75,
 	'75 + -(50 + 50 * 2);', -75,
@@ -83,15 +84,14 @@ const test_cases = [
 	'2 * 2 > 3 * 5 + 1;', 0,
 	'2 * 2 * -1 + 768;', 764,
 	'(1024 * 2 - 512) + 89;', 1625,
-	'(1024 * 2 - 512) + 89 > 2 * 2 * -1 + 768', 1,
-	'(1024 * 2 - 512) + 89 < 2 * 2 * -1 + 768', 0,
-	'(2 * 2 < 3 * 5 + 1) * 8', 8,
+	'(1024 * 2 - 512) + 89 > 2 * 2 * -1 + 768;', 1,
+	'(1024 * 2 - 512) + 89 < 2 * 2 * -1 + 768;', 0,
+	'(2 * 2 < 3 * 5 + 1) * 8;', 8,
 ];
 console.clear();
 
 let test_case_failure = false;
-const test_case_count = test_cases.length;
-for (let i = 0; i < test_case_count; i += 2) {
+for (let i = 0; i < test_cases.length; i += 2) {
 	const output = await WebAssembly.instantiate(compile(test_cases[i]));
 	const result = output.instance.exports.main();
 	if (result != test_cases[i + 1]) {
@@ -102,4 +102,24 @@ for (let i = 0; i < test_case_count; i += 2) {
 
 if (!test_case_failure) {
 	console.log("All test cases passed!");
+}
+
+const error_test_cases = [
+	'0',
+	'1 + * 5;',
+	'1 + > 5;',
+	'(1024 * 2 - 512 + 89 < 2 * 2 * -1 + 768;',
+	'1 + 5 +',
+];
+
+test_case_failure = false;
+for (let i = 0; i < error_test_cases.length; ++i) {
+	const output = compile(error_test_cases[i]);
+	if (output != null) {
+		console.log(`error test case failed\n${error_test_cases[i]}`);
+		test_case_failure = true;
+	}
+}
+if (!test_case_failure) {
+	console.log("All error test cases passed!");
 }
