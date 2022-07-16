@@ -31,10 +31,10 @@ node *expr_stmt() {
 }
 
 enum {
-	PRECEDENCE_ADD = 1,
-	PRECEDENCE_MUL,
+	PRECEDENCE_EQUALITY = 1,
 	PRECEDENCE_RELATIONAL,
-	PRECEDENCE_EQUALITY,
+	PRECEDENCE_ADD,
+	PRECEDENCE_MUL,
 };
 
 u32 get_precedence(node_type type) {
@@ -136,7 +136,7 @@ node *expr() {
 
 			node *local_top = op_node;
 
-			while (op_stack) {
+			while (op_stack && current_prec < get_precedence(op_stack->type)) {
 				primary = primary_stack;
 				primary_stack = primary_stack->next;
 
@@ -149,8 +149,15 @@ node *expr() {
 				local_top = op_node;
 			}
 
-			local_top->left = top_node;
-			top_node = local_top;
+			if (!op_stack) {
+				local_top->left = top_node;
+				top_node = local_top;
+			} else {
+				local_top->left = primary_stack;
+				primary_stack = primary_stack->next;
+				local_top->next = primary_stack;
+				primary_stack = local_top;
+			}
 		}
 
 		node *new_node = bump_alloc(sizeof(node));
