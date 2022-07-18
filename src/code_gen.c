@@ -61,6 +61,14 @@ void gen_expr(node *n) {
 		return;
 	}
 
+	if (n->type == NODE_ASSIGN) {
+		c += i32_const(c, 0);
+		c += i32_const(c, 0);
+		gen_expr(n->right);
+		c += i32_store(c, 2, n->left->addr); // hardcoded to be a variable
+		return;
+	}
+
 	if (n->type == NODE_INT_DECL) {
 		c += i32_const(c, 0);
 		c += i32_const(c, 0);

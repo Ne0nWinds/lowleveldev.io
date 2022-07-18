@@ -45,6 +45,13 @@ token_list tokenize(char *code, u32 length) {
 				continue;
 			}
 
+			if (startswith(c, "return", 6)) {
+				current_token->type = TOKEN_RETURN;
+				c += 5;
+				token_count += 1;
+				continue;
+			}
+
 			current_token->type = TOKEN_IDENTIFIER;
 			current_token->identifier.length = 1;
 			current_token->identifier.name = c; // TODO: make cache efficient

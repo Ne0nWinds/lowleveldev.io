@@ -152,13 +152,15 @@ node *expr_stmt() {
 }
 
 enum {
-	PRECEDENCE_EQUALITY = 1,
+	PRECEDENCE_ASSIGNMENT = 1,
+	PRECEDENCE_EQUALITY,
 	PRECEDENCE_RELATIONAL,
 	PRECEDENCE_ADD,
 	PRECEDENCE_MUL,
 };
 
 u32 get_precedence(node_type type) {
+	if (type == NODE_ASSIGN) return PRECEDENCE_ASSIGNMENT;
 	if (type == NODE_LT || type == NODE_LE || type == NODE_GT || type == NODE_GE) return PRECEDENCE_RELATIONAL;
 	if (type == NODE_EQ || type == NODE_NE) return PRECEDENCE_EQUALITY;
 	if (type == NODE_MULTIPLY || type == NODE_DIVIDE) return PRECEDENCE_MUL;
@@ -254,6 +256,10 @@ node *expr() {
 
 		if (current_token->type == TOKEN_GE) {
 			type = NODE_GE;
+		}
+		
+		if (current_token->type == '=') {
+			type = NODE_ASSIGN;
 		}
 
 		if (!type) break;

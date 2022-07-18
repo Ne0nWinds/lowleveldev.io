@@ -90,19 +90,29 @@ const test_cases = [
 	'1; 2; 3;', 3,
 	'2 * 5; (1024 * 2 - 512) + 89 < 2 * 2 * -1 + 768; 1;', 1,
 	'int x = 5; x;', 5,
-	'int abc1234 = 15; abc1234', 15,
+	'int abc1234 = 15; abc1234;', 15,
 	'int x = 5; int y = 16; x;', 5,
 	'int x = 5; int y = 16; y;', 16,
 	'int ab = 1024; int abc = 7; abc;', 7,
 	'int ab = 1024; int abc = 7; ab;', 1024,
 	'int a = 105; int b = 27; a > b;', 1,
 	'int a = 1 + (12 + 2 * 9) / 2 + ((6 + 10) / 2); a == 24;', 1,
+	'int x = 1; x = 6; x;', 6,
+	'int x = 1; x = x + 1; x;', 2,
+	'int x = 5; x = 7 + 5; x = x + 1; x == 13;', 1,
 ];
 console.clear();
 
 let test_case_failure = false;
 for (let i = 0; i < test_cases.length; i += 2) {
-	const output = await WebAssembly.instantiate(compile(test_cases[i]));
+	let output = null;
+	try {
+		output = await WebAssembly.instantiate(compile(test_cases[i]));
+	} catch (e) {
+		console.log(`test case caused exception\n${test_cases[i]}`);
+		console.log(e);
+		test_case_failure = true;
+	}
 	const result = output.instance.exports.main();
 	if (result != test_cases[i + 1]) {
 		console.log(`test case failed\n${test_cases[i]}\nshould return: ${test_cases[i + 1]}\nresult: ${result}`);
@@ -119,7 +129,10 @@ const error_test_cases = [
 	'1 + * 5;',
 	'1 + > 5;',
 	'(1024 * 2 - 512 + 89 < 2 * 2 * -1 + 768;',
-	'1 + 5 +',
+	'1 + 5 +;',
+	'int = 5',
+	'x = 5',
+	'int ab = 10; a;',
 ];
 
 test_case_failure = false;
