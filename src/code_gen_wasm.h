@@ -22,3 +22,6 @@ u8 i32_le_s(u8 *c);
 u8 i32_ge_s(u8 *c);
 
 u8 drop(u8 *c);
+
+u8 i32_load(u8 *c, u32 alignment, u32 offset);
+u8 i32_store(u8 *c, u32 alignment, u32 offset);

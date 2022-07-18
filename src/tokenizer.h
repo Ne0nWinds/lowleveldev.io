@@ -6,6 +6,11 @@ typedef enum token_type token_type;
 
 enum token_type {
 	TOKEN_INT = 256,
+	TOKEN_IDENTIFIER,
+
+	TOKEN_INT_DECL,
+	TOKEN_RETURN,
+
 	TOKEN_EQ,
 	TOKEN_NE,
 	TOKEN_LE,
@@ -16,8 +21,14 @@ typedef struct token token;
 typedef struct token_list token_list;
 
 struct token {
-	u32 token_type;
-	u32 value;
+	u32 type;
+	union {
+		u32 value;
+		struct {
+			char *name;
+			u32 length;
+		} identifier;
+	};
 };
 
 struct token_list {

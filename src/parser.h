@@ -5,6 +5,8 @@
 typedef enum node_type node_type;
 enum node_type {
 	NODE_INT = 1,
+	NODE_VAR,
+
 	NODE_PLUS,
 	NODE_MINUS,
 	NODE_MULTIPLY,
@@ -16,6 +18,8 @@ enum node_type {
 	NODE_LT,
 	NODE_GE,
 	NODE_LE,
+
+	NODE_INT_DECL,
 };
 
 typedef struct node node;
@@ -23,7 +27,10 @@ struct node {
 	node_type type;
 	node *next;
 
-	u32 value;
+	union {
+		u32 value;
+		u32 addr;
+	};
 
 	node *left;
 	node *right;

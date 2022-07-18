@@ -1,7 +1,7 @@
 #include "code_gen_wasm.h"
 
 u8 create_module(u8 *c) {
-	static char code[] = "(module";
+	static char code[] = "(module (memory 1)";
 	__builtin_memcpy(c, code, len(code) - 1);
 	return len(code) - 1;
 }
@@ -18,8 +18,7 @@ u8 create_code_section(u8 *c, u32 length) {
 
 u8 end_module(u8 *c) {
 	c[0] = ')';
-	c[1] = 0;
-	return 2;
+	return 1;
 }
 
 u8 i32_const(u8 *c, i32 value) {

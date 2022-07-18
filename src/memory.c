@@ -1,7 +1,6 @@
 #include "memory.h"
 
-static const u32 page_size = 65536;
-static void *alloc_ptr = page_size * 2;
+static void *alloc_ptr = PAGE_SIZE * 2;
 
 // TODO: Page Allocation
 void *bump_alloc(u32 size) {
@@ -16,7 +15,7 @@ void *bump_alloc(u32 size) {
 
 __attribute__((export_name("bump_alloc_src_code")))
 void *bump_alloc_src_code(u32 size) {
-	void *start = page_size * 2;
+	void *start = (u8 *)(PAGE_SIZE * 2);
 	u32 bytes_to_zero = (u8 *)alloc_ptr - (u8 *)start;
 
 	__builtin_memset(start, 0, bytes_to_zero);

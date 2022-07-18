@@ -19,7 +19,7 @@ compile_result *gen_code(node *ast) {
 	u8 *code_section_start = c;
 
 	node *current_expr = ast;
-	
+
 	while (current_expr->next) {
 		gen_expr(current_expr);
 		c += drop(c);
@@ -48,10 +48,24 @@ void gen_expr(node *n) {
 		return;
 	}
 
+	if (n->type == NODE_VAR) {
+		c += i32_const(c, 0);
+		c += i32_load(c, 2, n->addr);
+		return;
+	}
+
 	if (n->type == NODE_NEGATE) {
 		gen_expr(n->right);
 		c += i32_const(c, -1);
 		c += i32_mul(c);
+		return;
+	}
+
+	if (n->type == NODE_INT_DECL) {
+		c += i32_const(c, 0);
+		c += i32_const(c, 0);
+		gen_expr(n->right);
+		c += i32_store(c, 2, n->addr);
 		return;
 	}
 

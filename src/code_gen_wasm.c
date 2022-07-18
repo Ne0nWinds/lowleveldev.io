@@ -43,6 +43,9 @@ enum {
 	I32_GE_S = 0x4E,
 	I32_GE_U = 0x4F,
 
+	I32_LOAD = 0x28,
+	I32_STORE = 0x36,
+
 	DROP = 0x1A,
 };
 
@@ -116,6 +119,7 @@ u8 end_module(u8 *c) {
 
 // hard code main function
 u8 create_main_function(u8 *c) {
+
 	c[0] = SECTION_TYPE;
 	c[1] = 0x5;
 
@@ -135,6 +139,13 @@ u8 create_main_function(u8 *c) {
 
 	c += 4;
 
+	c[0] = SECTION_MEM;
+	c[1] = 0x3;
+	c[2] = 0x1;
+	c[3] = 0x0;
+	c[4] = 0x1;
+	c += 5;
+
 	c[0] = SECTION_EXPORT;
 	c[1] = 0x08;
 
@@ -150,7 +161,7 @@ u8 create_main_function(u8 *c) {
 
 	c += 10;
 
-	return 21;
+	return 26;
 }
 
 u8 create_code_section(u8 *c, u32 length) {
@@ -222,6 +233,20 @@ u8 i32_le_s(u8 *c) {
 u8 i32_ge_s(u8 *c) {
 	*c = I32_GE_S;
 	return 1;
+}
+
+u8 i32_store(u8 *c, u32 alignment, u32 offset) {
+	*c++ = I32_STORE;
+	*c++ = alignment;
+	u32 offset_length = leb128_encode(c, offset);
+	return 2 + offset_length;
+}
+
+u8 i32_load(u8 *c, u32 alignment, u32 offset) {
+	*c++ = I32_LOAD;
+	*c++ = alignment;
+	u32 offset_length = leb128_encode(c, offset);
+	return 2 + offset_length;
 }
 
 u8 drop(u8 *c) {
