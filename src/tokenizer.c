@@ -38,43 +38,44 @@ token_list tokenize(char *code, u32 length) {
 		}
 
 		if (is_alpha(*c)) {
-			if (startswith(c, "int", 3)) {
-				current_token->type = TOKEN_INT_DECL;
-				c += 2;
-				token_count += 1;
-				continue;
-			}
-
-			if (startswith(c, "return", 6)) {
-				current_token->type = TOKEN_RETURN;
-				c += 5;
-				token_count += 1;
-				continue;
-			}
-
-			if (startswith(c, "if", 2)) {
-				current_token->type = TOKEN_IF;
-				c += 1;
-				token_count += 1;
-				continue;
-			}
-
-			if (startswith(c, "else", 4)) {
-				current_token->type = TOKEN_ELSE;
-				c += 3;
-				token_count += 1;
-				continue;
-			}
-
 			current_token->type = TOKEN_IDENTIFIER;
-			current_token->identifier.length = 1;
-			current_token->identifier.name = c; // TODO: make cache efficient
+			u32 length = 1;
+			char *start = c;
+			current_token->identifier.name = start; // TODO: make cache efficient
 			c += 1;
+
 			while (is_alpha_numeric(*c)) {
-				current_token->identifier.length += 1;
+				length += 1;
 				c += 1;
 			}
 			c -= 1;
+
+			current_token->identifier.length = length;
+
+			if (length == 2 && startswith(start, "if", 2)) {
+				current_token->type = TOKEN_IF;
+				token_count += 1;
+				continue;
+			}
+
+			if (length == 3 && startswith(start, "int", 3)) {
+				current_token->type = TOKEN_INT_DECL;
+				token_count += 1;
+				continue;
+			}
+
+			if (length == 6 && startswith(start, "return", 6)) {
+				current_token->type = TOKEN_RETURN;
+				token_count += 1;
+				continue;
+			}
+
+			if (length == 4 && startswith(start, "else", 4)) {
+				current_token->type = TOKEN_ELSE;
+				token_count += 1;
+				continue;
+			}
+
 			token_count += 1;
 			continue;
 		}

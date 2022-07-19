@@ -116,6 +116,7 @@ if (RUN_TEST_CASES) {
 		'{ if (0) return 50; else return 100; }', 100,
 		'{ int x = 50; if (x == 25 * 2) { x = 1024; return x; } else { x = 2048; return x * 2; } }', 1024,
 		'{ int x = 50; if (x == 25 * 2 - 1) { x = 1024; return x; } else { x = 2048; return x * 2; } }', 4096,
+		'{ int return_value = 5; return return_value; }', 5,
 	];
 	console.clear();
 
