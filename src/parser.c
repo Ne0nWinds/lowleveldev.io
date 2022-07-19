@@ -116,15 +116,43 @@ void expect_token(token_type t) {
 }
 
 node *code_block() {
-	node *head = expr_stmt();
-	node *current = head;
-	while (!error_occurred && current_token->type != 0) {
+
+	u32 depth = 1;
+	expect_token('{');
+
+	node head = {0};
+	node *current = &head;
+
+	while (depth > 0 && !error_occurred && current_token->type != 0) {
+		while (current_token->type == '{') {
+			++depth;
+			current_token += 1;
+		}
+
 		current->next = expr_stmt();
 		current = current->next;
+
+		while (current_token->type == '}') {
+			--depth;
+			current_token += 1;
+		}
 	}
+
+	if (depth != 0) {
+		error_occurred = true;
+		return 0;
+	}
+
 	current->next = 0;
 
-	return head;
+	return head.next;
+}
+
+node *code_block_or_expr_stmt() {
+	if (current_token->type == '{') {
+		return code_block();
+	}
+	return expr_stmt();
 }
 
 node *expr_stmt() {
