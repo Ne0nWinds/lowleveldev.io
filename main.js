@@ -107,6 +107,15 @@ if (RUN_TEST_CASES) {
 		'{ { int x = 27; return x; } }', 27,
 		'{ int x = 27; { 2; } return x; }', 27,
 		'{ int x = 27; { x = x + 1; { 2; } } return x; }', 28,
+		'{ if (1) return 5; return 27; }', 5,
+		'{ if (0) return 5; return 27; }', 27,
+		'{ int x = 15; if (x == 15) return 1; return -1; }', 1,
+		'{ int x = 26 * 2; if (x >= (26 * 2)) return 1; return -1; }', 1,
+		'{ int x = 50; if (x > 25) { x = x * 2; x = x + 1; } return x; }', 101,
+		'{ if (1) return 50; else return 100; }', 50,
+		'{ if (0) return 50; else return 100; }', 100,
+		'{ int x = 50; if (x == 25 * 2) { x = 1024; return x; } else { x = 2048; return x * 2; } }', 1024,
+		'{ int x = 50; if (x == 25 * 2 - 1) { x = 1024; return x; } else { x = 2048; return x * 2; } }', 4096,
 	];
 	console.clear();
 
@@ -119,6 +128,8 @@ if (RUN_TEST_CASES) {
 			console.log(`test case caused exception\n${test_cases[i]}`);
 			console.log(e);
 			test_case_failure = true;
+			editor.setValue(test_cases[i]);
+			break;
 		}
 		const result = output.instance.exports.main();
 		if (result != test_cases[i + 1]) {

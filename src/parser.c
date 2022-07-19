@@ -132,7 +132,7 @@ node *code_block() {
 		current->next = expr_stmt();
 		current = current->next;
 
-		while (current_token->type == '}') {
+		while (current_token->type == '}' && depth > 0) {
 			--depth;
 			current_token += 1;
 		}
@@ -180,6 +180,24 @@ node *expr_stmt() {
 
 		expect_token(';');
 		return declaration;
+	}
+
+	if (current_token->type == TOKEN_IF) {
+		current_token += 1;
+
+		node *if_stmt = bump_alloc(sizeof(node));
+		if_stmt->type = NODE_IF;
+		expect_token('(');
+		if_stmt->if_stmt.cond = expr();
+		expect_token(')');
+		if_stmt->if_stmt.body = code_block_or_expr_stmt();
+
+		if (current_token->type == TOKEN_ELSE) {
+			current_token += 1;
+			if_stmt->if_stmt.else_stmt = code_block_or_expr_stmt();
+		}
+
+		return if_stmt;
 	}
 
 	if (current_token->type == TOKEN_RETURN) {

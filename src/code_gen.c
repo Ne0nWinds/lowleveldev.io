@@ -6,6 +6,15 @@ static u32 stack_size;
 static u8 *c;
 
 void gen_expr(node *n);
+void gen_code_block(node *n) {
+	node *current_expr = n;
+	while (current_expr->next) {
+		gen_expr(current_expr);
+		c += drop(c);
+		current_expr = current_expr->next;
+	}
+	gen_expr(current_expr);
+}
 
 compile_result *gen_code(node *ast) {
 
@@ -18,14 +27,7 @@ compile_result *gen_code(node *ast) {
 
 	u8 *code_section_start = c;
 
-	node *current_expr = ast;
-
-	while (current_expr->next) {
-		gen_expr(current_expr);
-		c += drop(c);
-		current_expr = current_expr->next;
-	}
-	gen_expr(current_expr);
+	gen_code_block(ast);
 
 	c += end_code_block(c);
 
@@ -63,17 +65,37 @@ void gen_expr(node *n) {
 
 	if (n->type == NODE_ASSIGN) {
 		c += i32_const(c, 0);
-		c += i32_const(c, 0);
 		gen_expr(n->right);
 		c += i32_store(c, 2, n->left->addr); // hardcoded to be a variable
+		c += i32_const(c, 0);
 		return;
 	}
 
 	if (n->type == NODE_INT_DECL) {
 		c += i32_const(c, 0);
-		c += i32_const(c, 0);
 		gen_expr(n->right);
 		c += i32_store(c, 2, n->addr);
+		c += i32_const(c, 0);
+		return;
+	}
+
+	if (n->type == NODE_IF) {
+		gen_expr(n->if_stmt.cond);
+		c += wasm_if(c);
+
+		if (n->if_stmt.body) {
+			gen_code_block(n->if_stmt.body);
+			c += drop(c);
+		}
+
+		if (n->if_stmt.else_stmt) {
+			c += wasm_else(c);
+			gen_code_block(n->if_stmt.else_stmt);
+			c += drop(c);
+		}
+		c += end_code_block(c);
+
+		c += i32_const(c, 0);
 		return;
 	}
 

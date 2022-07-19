@@ -21,6 +21,7 @@ enum node_type {
 	NODE_VAR,
 	NODE_INT_DECL,
 	NODE_ASSIGN,
+	NODE_IF,
 
 	NODE_RETURN,
 };
@@ -35,8 +36,17 @@ struct node {
 		u32 addr;
 	};
 
-	node *left;
-	node *right;
+	union {
+		struct {
+			node *left;
+			node *right;
+		};
+		struct {
+			node *cond;
+			node *body;
+			node *else_stmt;
+		} if_stmt;
+	};
 };
 
 node *parse_tokens(token_list tokens);

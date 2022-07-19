@@ -48,6 +48,8 @@ enum {
 
 	DROP = 0x1A,
 	RETURN = 0x0F,
+	IF = 0x04,
+	ELSE = 0x05,
 };
 
 
@@ -257,6 +259,17 @@ u8 drop(u8 *c) {
 
 u8 wasm_return(u8 *c) {
 	*c = RETURN;
+	return 1;
+}
+
+u8 wasm_if(u8 *c) {
+	*c++ = IF;
+	*c = 0x40;
+	return 2;
+}
+
+u8 wasm_else(u8 *c) {
+	*c = ELSE;
 	return 1;
 }
 

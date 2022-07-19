@@ -10,6 +10,8 @@ enum token_type {
 
 	TOKEN_INT_DECL,
 	TOKEN_RETURN,
+	TOKEN_IF,
+	TOKEN_ELSE,
 
 	TOKEN_EQ,
 	TOKEN_NE,
