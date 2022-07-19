@@ -47,6 +47,7 @@ enum {
 	I32_STORE = 0x36,
 
 	DROP = 0x1A,
+	RETURN = 0x0F,
 };
 
 
@@ -251,6 +252,11 @@ u8 i32_load(u8 *c, u32 alignment, u32 offset) {
 
 u8 drop(u8 *c) {
 	*c = DROP;
+	return 1;
+}
+
+u8 wasm_return(u8 *c) {
+	*c = RETURN;
 	return 1;
 }
 

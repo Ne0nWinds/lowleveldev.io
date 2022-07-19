@@ -21,6 +21,8 @@ enum node_type {
 	NODE_VAR,
 	NODE_INT_DECL,
 	NODE_ASSIGN,
+
+	NODE_RETURN,
 };
 
 typedef struct node node;

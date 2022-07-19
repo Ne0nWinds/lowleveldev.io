@@ -77,6 +77,12 @@ void gen_expr(node *n) {
 		return;
 	}
 
+	if (n->type == NODE_RETURN) {
+		gen_expr(n->right);
+		c += wasm_return(c);
+		return;
+	}
+
 	gen_expr(n->left);
 	gen_expr(n->right);
 

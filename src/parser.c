@@ -92,6 +92,8 @@ variable *find_variable(char *name, u32 length) {
 
 node *expr_stmt();
 node *expr();
+node *code_block();
+node *code_block_or_expr_stmt();
 void expect_token(token_type c);
 
 node *parse_tokens(token_list tokens) {
@@ -100,15 +102,9 @@ node *parse_tokens(token_list tokens) {
 	variable_bst = 0;
 	stack_pointer = PAGE_SIZE - 4;
 
-	node *head = expr_stmt();
-	node *current = head;
-	while (!error_occurred && current_token->type != 0) {
-		current->next = expr_stmt();
-		current = current->next;
-	}
-	current->next = 0;
+	node *block = code_block();
 
-	return (error_occurred) ? 0 : head;
+	return (error_occurred) ? 0 : block;
 }
 
 void expect_token(token_type t) {
@@ -117,6 +113,18 @@ void expect_token(token_type t) {
 	} else {
 		error_occurred = true;
 	}
+}
+
+node *code_block() {
+	node *head = expr_stmt();
+	node *current = head;
+	while (!error_occurred && current_token->type != 0) {
+		current->next = expr_stmt();
+		current = current->next;
+	}
+	current->next = 0;
+
+	return head;
 }
 
 node *expr_stmt() {
@@ -144,6 +152,17 @@ node *expr_stmt() {
 
 		expect_token(';');
 		return declaration;
+	}
+
+	if (current_token->type == TOKEN_RETURN) {
+		current_token += 1;
+
+		node *return_node = bump_alloc(sizeof(node));
+		return_node->type = NODE_RETURN;
+		return_node->right = expr();
+
+		expect_token(';');
+		return return_node;
 	}
 
 	node *n = expr();
@@ -257,7 +276,7 @@ node *expr() {
 		if (current_token->type == TOKEN_GE) {
 			type = NODE_GE;
 		}
-		
+
 		if (current_token->type == '=') {
 			type = NODE_ASSIGN;
 		}

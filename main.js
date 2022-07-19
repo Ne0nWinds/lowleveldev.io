@@ -100,6 +100,7 @@ const test_cases = [
 	'int x = 1; x = 6; x;', 6,
 	'int x = 1; x = x + 1; x;', 2,
 	'int x = 5; x = 7 + 5; x = x + 1; x == 13;', 1,
+	'return 15; 6;', 15,
 ];
 console.clear();
 
