@@ -107,8 +107,6 @@ if (RUN_TEST_CASES) {
 		'{ { int x = 27; return x; } }', 27,
 		'{ int x = 27; { 2; } return x; }', 27,
 		'{ int x = 27; { x = x + 1; { 2; } } return x; }', 28,
-		'{ return 5;; }', 5,
-		'{ ;;return 5;; }', 5,
 	];
 	console.clear();
 
