@@ -12,6 +12,9 @@ enum token_type {
 	TOKEN_RETURN,
 	TOKEN_IF,
 	TOKEN_ELSE,
+	TOKEN_FOR,
+	TOKEN_WHILE,
+	TOKEN_DO,
 
 	TOKEN_EQ,
 	TOKEN_NE,

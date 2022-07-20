@@ -114,9 +114,91 @@ if (RUN_TEST_CASES) {
 		'{ int x = 50; if (x > 25) { x = x * 2; x = x + 1; } return x; }', 101,
 		'{ if (1) return 50; else return 100; }', 50,
 		'{ if (0) return 50; else return 100; }', 100,
-		'{ int x = 50; if (x == 25 * 2) { x = 1024; return x; } else { x = 2048; return x * 2; } }', 1024,
-		'{ int x = 50; if (x == 25 * 2 - 1) { x = 1024; return x; } else { x = 2048; return x * 2; } }', 4096,
+`{
+	int x = 50;
+	if (x == 25 * 2) {
+		x = 1024;
+		return x;
+	} else {
+		x = 2048;
+		return x * 2;
+	}
+}`, 1024,
+`{
+	int x = 50;
+	if (x == 25 * 2 - 1) {
+		x = 1024;
+		return x;
+	} else {
+		x = 2048;
+		return x * 2;
+	}
+}`, 4096,
 		'{ int return_value = 5; return return_value; }', 5,
+`{
+	int j = 1;
+	for (int i = 0; i < 10; i = i + 1) {
+		j = j * 2;
+	}
+	return j;
+}`, 1024,
+`{
+	int total = 0;
+	for (int i = 0; i < 5; i = i + 1) {
+		for (int j = 0; j < 5; j = j + 1) {
+			total = total + 1;
+		}
+	}
+	return total;
+}`, 25,
+`{
+	int total = 0;
+	for (int i = 0; i < 5; i = i + 1) {
+		for (int j = 0; j < 5; j = j + 1) {
+			for (int w = 0; w < 5; w = w + 1) {
+				total = total + 2;
+				total = total - 1;
+			}
+		}
+	}
+	return total;
+}`, 125,
+`{
+	int total = 0;
+	for (int i = 0; i < 5; i = i + 1) {
+		for (int j = 0; j < 5; j = j + 1) {
+			for (int w = 0; w < 5; w = w + 1) {
+				if (total < 100) total = total + 1;
+				else total = total + 3;
+			}
+		}
+	}
+	return total;
+}`, 175,
+`{
+	int total = 0;
+	for (int i = 0; i < 5; i = i + 1)
+		for (int j = 0; j < 5; j = j + 1)
+			for (int w = 0; w < 5; w = w + 1)
+				if (total < 100)
+					total = total + 1;
+				else
+					total = total + 3;
+	return total;
+}`, 175,
+`{
+	for (int i = 0; i < 10; i = i + 1) {
+		if (i == 5) return i;
+	}
+	return -1;
+}`, 5,
+`{
+	for (int i = 0; i < 10; i = i + 2) {
+		if (i == 5) return i;
+	}
+	return -1;
+}`, -1,
+		'{ int i = 0; while (i < 10) i = i + 1; return i; }', 10
 	];
 	console.clear();
 
@@ -136,6 +218,7 @@ if (RUN_TEST_CASES) {
 		if (result != test_cases[i + 1]) {
 			console.log(`test case failed\n${test_cases[i]}\nshould return: ${test_cases[i + 1]}\nresult: ${result}`);
 			test_case_failure = true;
+			editor.setValue(test_cases[i]);
 		}
 	}
 

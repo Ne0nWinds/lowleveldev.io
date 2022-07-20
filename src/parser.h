@@ -22,10 +22,13 @@ enum node_type {
 	NODE_INT_DECL,
 	NODE_ASSIGN,
 	NODE_IF,
+	NODE_LOOP,
+	NODE_DO_WHILE,
 
 	NODE_RETURN,
 };
 
+// TODO: perhaps, we can avoid making a tree
 typedef struct node node;
 struct node {
 	node_type type;
@@ -46,6 +49,12 @@ struct node {
 			node *body;
 			node *else_stmt;
 		} if_stmt;
+		struct {
+			node *start;
+			node *condition;
+			node *iteration;
+			node *body;
+		} loop_stmt;
 	};
 };
 

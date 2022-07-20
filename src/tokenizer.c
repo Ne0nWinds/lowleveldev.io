@@ -52,8 +52,15 @@ token_list tokenize(char *code, u32 length) {
 
 			current_token->identifier.length = length;
 
+			// TODO: keyword binary search
 			if (length == 2 && startswith(start, "if", 2)) {
 				current_token->type = TOKEN_IF;
+				token_count += 1;
+				continue;
+			}
+
+			if (length == 2 && startswith(start, "do", 2)) {
+				current_token->type = TOKEN_DO;
 				token_count += 1;
 				continue;
 			}
@@ -64,14 +71,26 @@ token_list tokenize(char *code, u32 length) {
 				continue;
 			}
 
-			if (length == 6 && startswith(start, "return", 6)) {
-				current_token->type = TOKEN_RETURN;
+			if (length == 3 && startswith(start, "for", 3)) {
+				current_token->type = TOKEN_FOR;
 				token_count += 1;
 				continue;
 			}
 
 			if (length == 4 && startswith(start, "else", 4)) {
 				current_token->type = TOKEN_ELSE;
+				token_count += 1;
+				continue;
+			}
+
+			if (length == 5 && startswith(start, "while", 5)) {
+				current_token->type = TOKEN_WHILE;
+				token_count += 1;
+				continue;
+			}
+
+			if (length == 6 && startswith(start, "return", 6)) {
+				current_token->type = TOKEN_RETURN;
 				token_count += 1;
 				continue;
 			}

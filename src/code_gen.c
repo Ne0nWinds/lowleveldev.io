@@ -99,6 +99,31 @@ void gen_expr(node *n) {
 		return;
 	}
 
+	if (n->type == NODE_LOOP) {
+		gen_expr(n->loop_stmt.start);
+
+		c += loop(c);
+		c += block(c);
+
+		gen_expr(n->loop_stmt.condition);
+		c += i32_eqz(c);
+		c += br_if(c, 0);
+
+		gen_code_block(n->loop_stmt.body);
+		c += drop(c);
+
+		if (n->loop_stmt.iteration) {
+			gen_code_block(n->loop_stmt.iteration);
+			c += drop(c);
+		}
+
+		c += br(c, 1);
+		c += end_code_block(c);
+		c += end_code_block(c);
+		c += i32_const(c, 0);
+		return;
+	}
+
 	if (n->type == NODE_RETURN) {
 		gen_expr(n->right);
 		c += wasm_return(c);

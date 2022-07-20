@@ -92,7 +92,9 @@ variable *find_variable(char *name, u32 length) {
 
 node *expr_stmt();
 node *expr();
+node *decl();
 node *code_block();
+node *code_block_or_expr_stmt();
 node *code_block_or_expr_stmt();
 void expect_token(token_type c);
 
@@ -155,7 +157,7 @@ node *code_block_or_expr_stmt() {
 	return expr_stmt();
 }
 
-node *expr_stmt() {
+node *decl() {
 	if (current_token->type == TOKEN_INT_DECL) {
 		current_token += 1;
 
@@ -178,6 +180,17 @@ node *expr_stmt() {
 		declaration->addr = var->addr;
 		declaration->right = expr();
 
+		return declaration;
+	}
+
+	error_occurred = true;
+	return 0;
+}
+
+node *expr_stmt() {
+
+	if (current_token->type == TOKEN_INT_DECL) {
+		node *declaration = decl();
 		expect_token(';');
 		return declaration;
 	}
@@ -198,6 +211,52 @@ node *expr_stmt() {
 		}
 
 		return if_stmt;
+	}
+
+	if (current_token->type == TOKEN_FOR) {
+		current_token += 1;
+		node *for_loop = bump_alloc(sizeof(node));
+		for_loop->type = NODE_LOOP;
+
+		expect_token('(');
+		for_loop->loop_stmt.start = (current_token->type == TOKEN_INT_DECL) ? decl() : expr();
+		expect_token(';');
+		for_loop->loop_stmt.condition = expr();
+		expect_token(';');
+		for_loop->loop_stmt.iteration = expr();
+		expect_token(')');
+
+		for_loop->loop_stmt.body = code_block_or_expr_stmt();
+		return for_loop;
+	}
+
+	if (current_token->type == TOKEN_WHILE) {
+		current_token += 1;
+		node *while_loop = bump_alloc(sizeof(node));
+		while_loop->type = NODE_LOOP;
+
+		expect_token('(');
+		while_loop->loop_stmt.condition = expr();
+		expect_token(')');
+
+		while_loop->loop_stmt.body = code_block_or_expr_stmt();
+		return while_loop;
+	}
+
+	if (current_token->type == TOKEN_DO) {
+		current_token += 1;
+		node *while_loop = bump_alloc(sizeof(node));
+		while_loop->type = NODE_DO_WHILE;
+
+		while_loop->loop_stmt.body = code_block_or_expr_stmt();
+
+		expect_token(TOKEN_WHILE);
+		expect_token('(');
+		while_loop->loop_stmt.condition = expr();
+		expect_token(')');
+		expect_token(';');
+
+		return while_loop;
 	}
 
 	if (current_token->type == TOKEN_RETURN) {

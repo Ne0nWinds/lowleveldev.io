@@ -48,8 +48,12 @@ enum {
 
 	DROP = 0x1A,
 	RETURN = 0x0F,
+	BLOCK = 0x2,
+	LOOP = 0x3,
 	IF = 0x04,
 	ELSE = 0x05,
+	BR = 0xC,
+	BR_IF = 0xD,
 };
 
 
@@ -208,6 +212,11 @@ u8 i32_div_s(u8 *c) {
 	return 1;
 }
 
+u8 i32_eqz(u8 *c) {
+	*c = I32_EQZ;
+	return 1;
+}
+
 u8 i32_eq(u8 *c) {
 	*c = I32_EQ;
 	return 1;
@@ -271,6 +280,31 @@ u8 wasm_if(u8 *c) {
 u8 wasm_else(u8 *c) {
 	*c = ELSE;
 	return 1;
+}
+
+u8 br(u8 *c, u32 index) {
+	*c++ = BR;
+	u32 offset_length = leb128_encode(c, index);
+	return 1 + offset_length;
+}
+
+u8 br_if(u8 *c, u32 index) {
+	*c++ = BR_IF;
+	u32 offset_length = leb128_encode(c, index);
+
+	return 1 + offset_length;
+}
+
+u8 loop(u8 *c) {
+	*c++ = LOOP;
+	*c = 0x40;
+	return 2;
+}
+
+u8 block(u8 *c) {
+	*c++ = BLOCK;
+	*c = 0x40;
+	return 2;
 }
 
 u8 end_code_block(u8 *c) {
