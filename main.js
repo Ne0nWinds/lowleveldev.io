@@ -211,6 +211,17 @@ if (RUN_TEST_CASES) {
 		'{ int x = 27; int y = *&*&x; return y; }', 27,
 		'{ int x = 18; int y = &x; *y = 5; return x; }', 5,
 		'{ int x = 18; int y = &x; *y = *y + 1; return x; }', 19,
+		'{ int x = 30; int y = &x; int z = &y; return **z; }', 30,
+`{
+	int x = 5;
+	// x = x + 1;
+	return x;
+}`, 5,
+`{
+	int x = 5;
+	/* x = x + 1; */
+	return x;
+}`, 5,
 	];
 	console.clear();
 
@@ -240,7 +251,8 @@ if (RUN_TEST_CASES) {
 
 	const error_test_cases = [
 		'{ 0 }',
-		'{ 1 + * 5; }',
+		// '{ 1 + * 5; }', properly testing this requires type checking
+		'{ 1 + / 8; }',
 		'{ 1 + 5 +; }',
 		'{ 1 + > 5; }',
 		'{ (1024 * 2 - 512 + 89 < 2 * 2 * -1 + 768; }',

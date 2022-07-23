@@ -21,6 +21,21 @@ token_list tokenize(char *code, u32 length) {
 
 		if (is_whitespace(*c)) continue;
 
+		if (*c == '/' && *(c + 1) == '/') {
+			c += 2;
+			while (*c && *c != '\n') c += 1;
+			c -= 1;
+			continue;
+		}
+
+		if (*c == '/' && *(c + 1) == '*') {
+			c += 2;
+			while (*c && *c != '*' && *(c + 1) != '/') c += 1;
+			// TODO: error detection
+			c += 1;
+			continue;
+		}
+
 		token *current_token = tokens + token_count;
 		current_token->type = *c;
 
