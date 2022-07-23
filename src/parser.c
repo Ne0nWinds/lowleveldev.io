@@ -93,6 +93,7 @@ variable *find_variable(char *name, u32 length) {
 node *expr_stmt();
 node *expr();
 node *decl();
+node *primary();
 node *code_block();
 node *code_block_or_expr_stmt();
 node *code_block_or_expr_stmt();
@@ -291,7 +292,7 @@ u32 get_precedence(node_type type) {
 	return PRECEDENCE_ADD;
 }
 
-node *primary() {
+node *unary() {
 	if (current_token->type == '-') {
 		current_token += 1;
 		node *unary_node = bump_alloc(sizeof(node));
@@ -299,6 +300,30 @@ node *primary() {
 		unary_node->right = primary();
 		return unary_node;
 	}
+
+	if (current_token->type == '&' || current_token->type == '*') {
+
+		node head = {0};
+		node *current = &head;
+
+		while (current_token->type == '*' || current_token->type == '&') {
+			if (current_token->type == '*' && (current_token + 1)->type == '&') {
+				current_token += 2;
+				continue;
+			}
+			current = current->right = bump_alloc(sizeof(node));
+			current->type = (current_token->type == '&') ? NODE_ADDRESS : NODE_DEREF;
+			current_token += 1;
+		}
+		current->right = primary();
+
+		return head.right;
+	}
+
+	return primary();
+}
+
+node *primary() {
 
 	if (current_token->type == '(') {
 		current_token += 1;
@@ -336,7 +361,7 @@ node *expr() {
 	node *op_stack = 0;
 	node *top_node = 0;
 
-	top_node = primary();
+	top_node = unary();
 	if (!top_node) return 0;
 
 	while (!error_occurred) {
@@ -432,7 +457,7 @@ node *expr() {
 		op_stack = new_node;
 		current_token += 1;
 
-		node *primary_node = primary();
+		node *primary_node = unary();
 		primary_node->next = primary_stack;
 		primary_stack = primary_node;
 	}

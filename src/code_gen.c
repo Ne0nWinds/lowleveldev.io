@@ -4,6 +4,7 @@
 static node **stack;
 static u32 stack_size;
 static u8 *c;
+static bool error_occurred;
 
 void gen_expr(node *n);
 void gen_code_block(node *n) {
@@ -20,6 +21,7 @@ compile_result *gen_code(node *ast) {
 
 	u8 *code = bump_alloc(0);
 	c = code;
+	error_occurred = false;
 
 	c += create_module(c);
 
@@ -42,8 +44,21 @@ compile_result *gen_code(node *ast) {
 	return result;
 }
 
+void gen_addr(node *n) {
+	if (n->type == NODE_VAR) {
+		c += i32_const(c, n->addr);
+		return;
+	}
+	if (n->type == NODE_DEREF) {
+		gen_expr(n->right);
+		return;
+	}
+
+	error_occurred = true;
+}
+
 void gen_expr(node *n) {
-	if (!n) return;
+	if (error_occurred) return;
 
 	if (n->type == NODE_INT) {
 		c += i32_const(c, n->value);
@@ -56,6 +71,17 @@ void gen_expr(node *n) {
 		return;
 	}
 
+	if (n->type == NODE_DEREF) {
+		gen_expr(n->right);
+		c += i32_load(c, 2, 0);
+		return;
+	}
+
+	if (n->type == NODE_ADDRESS) {
+		c += i32_const(c, n->right->addr);
+		return;
+	}
+
 	if (n->type == NODE_NEGATE) {
 		gen_expr(n->right);
 		c += i32_const(c, -1);
@@ -64,9 +90,9 @@ void gen_expr(node *n) {
 	}
 
 	if (n->type == NODE_ASSIGN) {
-		c += i32_const(c, 0);
+		gen_addr(n->left);
 		gen_expr(n->right);
-		c += i32_store(c, 2, n->left->addr); // hardcoded to be a variable
+		c += i32_store(c, 2, 0);
 		c += i32_const(c, 0);
 		return;
 	}
@@ -100,7 +126,8 @@ void gen_expr(node *n) {
 	}
 
 	if (n->type == NODE_LOOP) {
-		gen_expr(n->loop_stmt.start);
+		if (n->loop_stmt.start)
+			gen_expr(n->loop_stmt.start);
 
 		c += loop(c);
 		c += block(c);

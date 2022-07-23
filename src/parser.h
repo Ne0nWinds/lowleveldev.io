@@ -6,11 +6,14 @@ typedef enum node_type node_type;
 enum node_type {
 	NODE_INT = 1,
 
+	NODE_NEGATE,
+	NODE_DEREF,
+	NODE_ADDRESS,
+
 	NODE_PLUS,
 	NODE_MINUS,
 	NODE_MULTIPLY,
 	NODE_DIVIDE,
-	NODE_NEGATE,
 	NODE_EQ,
 	NODE_NE,
 	NODE_GT,

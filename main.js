@@ -202,6 +202,15 @@ if (RUN_TEST_CASES) {
 		'{ int i = 10; while (i < 10) i = i + 1; return i; }', 10,
 		'{ int i = 0; do { i = i + 1; } while (i < 10); return i; }', 10,
 		'{ int i = 10; do { i = i + 1; } while (i < 10); return i; }', 11,
+		'{ int x = 10; int y = &x; return y; }', 65536 - 4,
+		'{ int x = 0; *(65536 - 4) = 15; return x; }', 15,
+		'{ int x = 0; int y = 27; *(65536 - 4) = 15; return x; }', 15,
+		'{ int x = 1; int y = 27; *(65536 - 8) = 15; return x; }', 1,
+		'{ int x = 27; return *&x; }', 27,
+		'{ int x = 27; return *&*&x; }', 27,
+		'{ int x = 27; int y = *&*&x; return y; }', 27,
+		'{ int x = 18; int y = &x; *y = 5; return x; }', 5,
+		'{ int x = 18; int y = &x; *y = *y + 1; return x; }', 19,
 	];
 	console.clear();
 
@@ -232,9 +241,9 @@ if (RUN_TEST_CASES) {
 	const error_test_cases = [
 		'{ 0 }',
 		'{ 1 + * 5; }',
+		'{ 1 + 5 +; }',
 		'{ 1 + > 5; }',
 		'{ (1024 * 2 - 512 + 89 < 2 * 2 * -1 + 768; }',
-		'{ 1 + 5 +; }',
 		'{ int = 5 }',
 		'{ x = 5 }',
 		'{ int ab = 10; a; }',
