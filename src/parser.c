@@ -10,6 +10,7 @@ struct variable {
 	char *name;
 	u32 length;
 	u32 addr;
+	u32 pointer_indirections;
 	variable *left;
 	variable *right;
 };
@@ -24,12 +25,13 @@ int string_compare(char *a, char *b, u32 n) {
 	return 0;
 }
 
-variable *add_variable(char *name, u32 length) {
+variable *add_variable(char *name, u32 length, u32 pointer_indirections) {
 
 	variable *var = bump_alloc(sizeof(variable));
 	var->name = name;
 	var->length = length;
 	var->addr = stack_pointer;
+	var->pointer_indirections = pointer_indirections;
 	stack_pointer -= 4;
 
 	variable *current = variable_bst;
@@ -90,6 +92,28 @@ variable *find_variable(char *name, u32 length) {
 	return 0;
 }
 
+static node *free_node_stack = 0;
+
+static node *allocate_node() {
+	if (free_node_stack == 0)
+		return bump_alloc(sizeof(node));
+
+	node *new_node = free_node_stack;
+	free_node_stack = free_node_stack->next;
+	return new_node;
+}
+
+static void free_node(node *n) {
+	*n = (node){0};
+	if (!free_node_stack) {
+		free_node_stack = n;
+		return;
+	}
+
+	n->next = free_node_stack;
+	free_node_stack = n;
+}
+
 node *expr_stmt();
 node *expr();
 node *decl();
@@ -104,6 +128,7 @@ node *parse_tokens(token_list tokens) {
 	current_token = tokens.tokens;
 	variable_bst = 0;
 	stack_pointer = PAGE_SIZE - 4;
+	free_node_stack = 0;
 
 	node *block = code_block();
 
@@ -162,12 +187,18 @@ node *decl() {
 	if (current_token->type == TOKEN_INT_DECL) {
 		current_token += 1;
 
+		u32 pointer_indirections = 0;
+		while (current_token->type == '*') {
+			pointer_indirections += 1;
+			current_token += 1;
+		}
+
 		if (current_token->type != TOKEN_IDENTIFIER) {
 			error_occurred = true;
 			return 0;
 		}
 
-		variable *var = add_variable(current_token->identifier.name, current_token->identifier.length);
+		variable *var = add_variable(current_token->identifier.name, current_token->identifier.length, pointer_indirections);
 		if (!var) {
 			error_occurred = true;
 			return 0;
@@ -176,9 +207,10 @@ node *decl() {
 
 		expect_token('=');
 
-		node *declaration = bump_alloc(sizeof(node));
+		node *declaration = allocate_node();
 		declaration->type = NODE_INT_DECL;
-		declaration->addr = var->addr;
+		declaration->var.addr = var->addr;
+		declaration->var.pointer_indirections = pointer_indirections;
 		declaration->right = expr();
 
 		return declaration;
@@ -199,7 +231,7 @@ node *expr_stmt() {
 	if (current_token->type == TOKEN_IF) {
 		current_token += 1;
 
-		node *if_stmt = bump_alloc(sizeof(node));
+		node *if_stmt = allocate_node();
 		if_stmt->type = NODE_IF;
 		expect_token('(');
 		if_stmt->if_stmt.cond = expr();
@@ -216,7 +248,7 @@ node *expr_stmt() {
 
 	if (current_token->type == TOKEN_FOR) {
 		current_token += 1;
-		node *for_loop = bump_alloc(sizeof(node));
+		node *for_loop = allocate_node();
 		for_loop->type = NODE_LOOP;
 
 		expect_token('(');
@@ -233,7 +265,7 @@ node *expr_stmt() {
 
 	if (current_token->type == TOKEN_WHILE) {
 		current_token += 1;
-		node *while_loop = bump_alloc(sizeof(node));
+		node *while_loop = allocate_node();
 		while_loop->type = NODE_LOOP;
 
 		expect_token('(');
@@ -246,7 +278,7 @@ node *expr_stmt() {
 
 	if (current_token->type == TOKEN_DO) {
 		current_token += 1;
-		node *while_loop = bump_alloc(sizeof(node));
+		node *while_loop = allocate_node();
 		while_loop->type = NODE_DO_WHILE;
 
 		while_loop->loop_stmt.body = code_block_or_expr_stmt();
@@ -263,7 +295,7 @@ node *expr_stmt() {
 	if (current_token->type == TOKEN_RETURN) {
 		current_token += 1;
 
-		node *return_node = bump_alloc(sizeof(node));
+		node *return_node = allocate_node();
 		return_node->type = NODE_RETURN;
 		return_node->right = expr();
 
@@ -295,7 +327,7 @@ u32 get_precedence(node_type type) {
 node *unary() {
 	if (current_token->type == '-') {
 		current_token += 1;
-		node *unary_node = bump_alloc(sizeof(node));
+		node *unary_node = allocate_node();
 		unary_node->type = NODE_NEGATE;
 		unary_node->right = primary();
 		return unary_node;
@@ -311,7 +343,7 @@ node *unary() {
 				current_token += 2;
 				continue;
 			}
-			current = current->right = bump_alloc(sizeof(node));
+			current = current->right = allocate_node();
 			current->type = (current_token->type == '&') ? NODE_ADDRESS : NODE_DEREF;
 			current_token += 1;
 		}
@@ -336,15 +368,16 @@ node *primary() {
 		variable *var = find_variable(current_token->identifier.name, current_token->identifier.length);
 		if (!var) goto error;
 
-		node *primary_node = bump_alloc(sizeof(node));
+		node *primary_node = allocate_node();
 		primary_node->type = NODE_VAR;
-		primary_node->addr = var->addr;
+		primary_node->var.addr = var->addr;
+		primary_node->var.pointer_indirections = var->pointer_indirections;
 		current_token += 1;
 		return primary_node;
 	}
 
 	if (current_token->type == TOKEN_INT) {
-		node *primary_node = bump_alloc(sizeof(node));
+		node *primary_node = allocate_node();
 		primary_node->type = NODE_INT;
 		primary_node->value = current_token->value;
 		current_token += 1;
@@ -354,6 +387,32 @@ node *primary() {
 error:
 	error_occurred = true;
 	return 0;
+}
+
+void simplify_node(node *n) {
+	if (n->type == NODE_PLUS) {
+		if (n->left->type == NODE_VAR && n->left->var.pointer_indirections || n->left->type == NODE_ADDRESS) {
+			node *mul = allocate_node();
+			mul->type = NODE_MULTIPLY;
+
+			node *ptr_multipler = allocate_node();
+			ptr_multipler->type = NODE_INT;
+			ptr_multipler->value = 4;
+
+			mul->left = n->right;
+			mul->right = ptr_multipler;
+
+			n->right = mul;
+		}
+
+		if (n->left->type == n->right->type == NODE_INT) {
+			n->type = NODE_INT;
+			i32 new_value = n->left->value + n->right->value;
+			free_node(n->left);
+			free_node(n->right);
+			n->value = new_value;
+		}
+	}
 }
 
 node *expr() {
@@ -451,7 +510,7 @@ node *expr() {
 			}
 		}
 
-		node *new_node = bump_alloc(sizeof(node));
+		node *new_node = allocate_node();
 		new_node->type = type;
 		new_node->next = op_stack;
 		op_stack = new_node;
@@ -489,8 +548,11 @@ node *expr() {
 
 	if (local_top) {
 		local_top->left = top_node;
+
 		top_node = local_top;
 	}
+
+	simplify_node(top_node);
 
 	return top_node;
 }

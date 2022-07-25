@@ -39,10 +39,10 @@ struct node {
 
 	union {
 		u32 value;
-		u32 addr;
-	};
-
-	union {
+		struct {
+			u32 addr;
+			u32 pointer_indirections;
+		} var;
 		struct {
 			node *left;
 			node *right;

@@ -46,7 +46,7 @@ compile_result *gen_code(node *ast) {
 
 void gen_addr(node *n) {
 	if (n->type == NODE_VAR) {
-		c += i32_const(c, n->addr);
+		c += i32_const(c, n->var.addr);
 		return;
 	}
 	if (n->type == NODE_DEREF) {
@@ -67,7 +67,7 @@ void gen_expr(node *n) {
 
 	if (n->type == NODE_VAR) {
 		c += i32_const(c, 0);
-		c += i32_load(c, 2, n->addr);
+		c += i32_load(c, 2, n->var.addr);
 		return;
 	}
 
@@ -78,7 +78,7 @@ void gen_expr(node *n) {
 	}
 
 	if (n->type == NODE_ADDRESS) {
-		c += i32_const(c, n->right->addr);
+		c += i32_const(c, n->right->var.addr);
 		return;
 	}
 
@@ -100,7 +100,7 @@ void gen_expr(node *n) {
 	if (n->type == NODE_INT_DECL) {
 		c += i32_const(c, 0);
 		gen_expr(n->right);
-		c += i32_store(c, 2, n->addr);
+		c += i32_store(c, 2, n->var.addr);
 		c += i32_const(c, 0);
 		return;
 	}

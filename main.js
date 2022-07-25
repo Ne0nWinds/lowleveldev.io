@@ -222,6 +222,8 @@ if (RUN_TEST_CASES) {
 	/* x = x + 1; */
 	return x;
 }`, 5,
+		'{ int x = 5; int y = 17; int *z = &y; return *(z + 1); }', 5,
+		'{ int x = 5; int y = 17; return *(&y + 1); }', 5,
 	];
 	console.clear();
 
