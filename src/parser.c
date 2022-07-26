@@ -327,9 +327,16 @@ u32 get_precedence(node_type type) {
 node *unary() {
 	if (current_token->type == '-') {
 		current_token += 1;
+		node *primary_expr = primary();
+		if (primary_expr->type == NODE_INT) {
+			primary_expr->value *= -1;
+			return primary_expr;
+		}
+
 		node *unary_node = allocate_node();
 		unary_node->type = NODE_NEGATE;
-		unary_node->right = primary();
+		unary_node->right = primary_expr;
+
 		return unary_node;
 	}
 
@@ -390,7 +397,8 @@ error:
 }
 
 void simplify_node(node *n) {
-	if (n->type == NODE_PLUS) {
+
+	if (n->type == NODE_PLUS || n->type == NODE_MINUS) {
 		if (n->left->type == NODE_VAR && n->left->var.pointer_indirections || n->left->type == NODE_ADDRESS) {
 			node *mul = allocate_node();
 			mul->type = NODE_MULTIPLY;
@@ -404,10 +412,34 @@ void simplify_node(node *n) {
 
 			n->right = mul;
 		}
+	}
 
-		if (n->left->type == n->right->type == NODE_INT) {
+	if (n->type >= NODE_PLUS && n->type <= NODE_LE) {
+		if (n->left->type == NODE_INT && n->right->type == NODE_INT) {
+			i32 new_value = 0;
+			switch (n->type) {
+				case NODE_PLUS:
+					new_value = n->left->value + n->right->value; break;
+				case NODE_MINUS:
+					new_value = n->left->value - n->right->value; break;
+				case NODE_MULTIPLY:
+					new_value = n->left->value * n->right->value; break;
+				case NODE_DIVIDE:
+					new_value = n->left->value / n->right->value; break;
+				case NODE_EQ:
+					new_value = n->left->value == n->right->value; break;
+				case NODE_NE:
+					new_value = n->left->value != n->right->value; break;
+				case NODE_GT:
+					new_value = n->left->value > n->right->value; break;
+				case NODE_LT:
+					new_value = n->left->value < n->right->value; break;
+				case NODE_GE:
+					new_value = n->left->value >= n->right->value; break;
+				case NODE_LE:
+					new_value = n->left->value <= n->right->value; break;
+			}
 			n->type = NODE_INT;
-			i32 new_value = n->left->value + n->right->value;
 			free_node(n->left);
 			free_node(n->right);
 			n->value = new_value;
@@ -491,6 +523,7 @@ node *expr() {
 				primary_stack = primary_stack->next;
 
 				op_node->left = primary;
+				simplify_node(op_node);
 
 				op_node = op_stack;
 				op_stack = op_stack->next;
@@ -502,6 +535,7 @@ node *expr() {
 			if (!op_stack) {
 				local_top->left = top_node;
 				top_node = local_top;
+				simplify_node(top_node);
 			} else {
 				local_top->left = primary_stack;
 				primary_stack = primary_stack->next;
@@ -538,6 +572,8 @@ node *expr() {
 		primary_stack = primary_stack->next;
 
 		op_node->left = primary;
+
+		simplify_node(op_node);
 
 		op_node = op_stack;
 		op_stack = op_stack->next;

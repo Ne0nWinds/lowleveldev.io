@@ -211,7 +211,7 @@ if (RUN_TEST_CASES) {
 		'{ int x = 27; int y = *&*&x; return y; }', 27,
 		'{ int x = 18; int y = &x; *y = 5; return x; }', 5,
 		'{ int x = 18; int y = &x; *y = *y + 1; return x; }', 19,
-		'{ int x = 30; int y = &x; int z = &y; return **z; }', 30,
+		'{ int x = 30; int *y = &x; int *z = &y; return **z; }', 30,
 `{
 	int x = 5;
 	// x = x + 1;
@@ -223,7 +223,11 @@ if (RUN_TEST_CASES) {
 	return x;
 }`, 5,
 		'{ int x = 5; int y = 17; int *z = &y; return *(z + 1); }', 5,
+		'{ int x = 5; int y = 17; int *z = &y; return *(&z + 2); }', 5,
 		'{ int x = 5; int y = 17; return *(&y + 1); }', 5,
+		'{ int x = 5; int y = 17; return *(&x - 1); }', 17,
+		'{ int x = 3; int y = 13; return *(&y-(-1)); }}', 3,
+		// '{ int a = 128; return (&a + 2) - &x + 3; }', 5
 	];
 	console.clear();
 

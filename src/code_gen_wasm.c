@@ -77,20 +77,23 @@ u8 leb128_encode(u8 *c, i32 value) {
 	value >>= 7;
 
 	if (value < 0) {
-		while (value != -1 && !(byte & 0x40)) {
-			*c |= 0x80;
-			c += 1;
+		while (value != -1) {
+			*c++ |= 0x80;
 			byte = value & 0x7F;
 			value >>= 7;
 			*c = byte;
+			length += 1;
+		}
+		if (!(byte & 0x40)) {
+			*c++ |= 0x80;
+			*c = 127;
 			length += 1;
 		}
 		return length;
 	}
 
 	while (value) {
-		*c |= 0x80;
-		c += 1;
+		*c++ |= 0x80;
 		byte = value & 0x7F;
 		value >>= 7;
 		*c = byte;

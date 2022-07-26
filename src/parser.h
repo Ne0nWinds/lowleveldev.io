@@ -38,7 +38,7 @@ struct node {
 	node *next;
 
 	union {
-		u32 value;
+		i32 value;
 		struct {
 			u32 addr;
 			u32 pointer_indirections;
