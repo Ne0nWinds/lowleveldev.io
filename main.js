@@ -38,7 +38,7 @@ document.getElementById("run").onclick = async () => {
 	}
 };
 
-const RUN_TEST_CASES = 1;
+const RUN_TEST_CASES = 0;
 
 if (RUN_TEST_CASES) {
 	const test_cases = [

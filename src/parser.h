@@ -65,6 +65,7 @@ typedef struct func func;
 struct func {
 	char *name;
 	u32 length;
+	u32 func_idx;
 	func *next;
 	node *body;
 	func *left;

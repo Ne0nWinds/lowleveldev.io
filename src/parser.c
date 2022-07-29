@@ -93,11 +93,14 @@ variable *find_variable(char *name, u32 length) {
 }
 
 static func *function_bst;
+static u32 global_function_count;
 
 func *add_function(char *name, u32 length) {
 	func *new_function = bump_alloc(sizeof(func));
 	new_function->name = name;
 	new_function->length = length;
+	new_function->func_idx = global_function_count;
+	global_function_count += 1;
 
 	func *current = function_bst;
 	func *previous = 0;
@@ -172,13 +175,15 @@ func *parse_tokens(token_list tokens, u32 *function_count) {
 	current_token = tokens.tokens;
 	variable_bst = 0;
 	function_bst = 0;
+	global_function_count = 0;
 	stack_pointer = PAGE_SIZE - 4;
 	free_node_stack = 0;
 
 	while (current_token->type && !error_occurred) {
 		function_decl();
-		*function_count += 1;
 	}
+
+	*function_count = global_function_count;
 
 	return (error_occurred) ? 0 : function_bst;
 }

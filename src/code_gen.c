@@ -27,12 +27,34 @@ compile_result *gen_code(func *ast, u32 function_count) {
 
 	c += create_wasm_layout(c, ast, function_count);
 
+	func *function_stack[function_count];
+	function_stack[0] = ast;
+	u32 function_stack_length = 1;
+
+	*c++ = SECTION_CODE;
 	u8 *code_section_start = c;
-	gen_code_block(ast->body);
 
-	c += end_code_block(c);
+	u32 total_size = 0;
+	*c++ = function_count;
+	for (u32 i = 0; i < function_count; ++i) {
+		func *f = function_stack[--function_stack_length];
+		if (f->right) function_stack[function_stack_length++] = f->right;
+		if (f->left) function_stack[function_stack_length++] = f->left;
 
-	c += create_code_section(code_section_start, c - code_section_start);
+		u8 *func_start = c;
+		*c++ = 0; // vec(locals)
+		gen_code_block(f->body);
+		c += end_code_block(c);
+		u32 length = c - func_start;
+		u32 encoded_integer_length = encode_integer_length(length);
+		__builtin_memcpy(func_start + encoded_integer_length, func_start, length);
+		c += encode_integer(func_start, length);
+	}
+	total_size = c - code_section_start;
+
+	u32 encoded_integer_length = encode_integer_length(total_size);
+	__builtin_memcpy(code_section_start + encoded_integer_length, code_section_start, total_size);
+	c += encode_integer(code_section_start, total_size);
 
 	c += end_module(c);
 
