@@ -92,6 +92,11 @@ void gen_expr(node *n) {
 		return;
 	}
 
+	if (n->type == NODE_FUNC_CALL) {
+		c += call(c, n->value);
+		return;
+	}
+
 	if (n->type == NODE_DEREF) {
 		gen_expr(n->right);
 		c += i32_load(c, 2, 0);

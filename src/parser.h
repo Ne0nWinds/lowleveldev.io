@@ -22,6 +22,7 @@ enum node_type {
 	NODE_LE,
 
 	NODE_VAR,
+	NODE_FUNC_CALL,
 	NODE_INT_DECL,
 	NODE_ASSIGN,
 	NODE_IF,

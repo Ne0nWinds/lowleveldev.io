@@ -6,7 +6,6 @@ u8 create_module(u8 *c);
 u8 end_module(u8 *c);
 
 u8 create_wasm_layout(u8 *c, func *bst, u32 function_count);
-u8 create_code_section(u8 *c, u32 length);
 u8 end_code_block(u8 *c);
 
 u8 encode_integer(u8 *c, i32 value);
@@ -34,6 +33,7 @@ u8 br(u8 *c, u32 index);
 u8 br_if(u8 *c, u32 index);
 u8 loop(u8 *c);
 u8 block(u8 *c);
+u8 call(u8 *c, u32 index);
 
 u8 i32_load(u8 *c, u32 alignment, u32 offset);
 u8 i32_store(u8 *c, u32 alignment, u32 offset);
@@ -91,6 +91,7 @@ enum {
 	ELSE = 0x05,
 	BR = 0xC,
 	BR_IF = 0xD,
+	CALL = 0x10,
 };
 
 

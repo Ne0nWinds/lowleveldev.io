@@ -138,6 +138,28 @@ func *add_function(char *name, u32 length) {
 	return new_function;
 }
 
+func *find_function(char *name, u32 length) {
+	func *current = function_bst;
+
+	while (current != 0) {
+		u32 compare_result = string_compare(name, current->name, max(length, current->length));
+
+		if (compare_result == 0) {
+			return current;
+		}
+
+		if (compare_result == -1) {
+			current = current->left;
+		}
+
+		if (compare_result == 1) {
+			current = current->right;
+		}
+	}
+
+	return 0;
+}
+
 static node *free_node_stack = 0;
 
 static node *allocate_node() {
@@ -181,6 +203,7 @@ func *parse_tokens(token_list tokens, u32 *function_count) {
 
 	while (current_token->type && !error_occurred) {
 		function_decl();
+		variable_bst = 0;
 	}
 
 	*function_count = global_function_count;
@@ -439,15 +462,30 @@ node *primary() {
 	}
 
 	if (current_token->type == TOKEN_IDENTIFIER) {
-		variable *var = find_variable(current_token->identifier.name, current_token->identifier.length);
-		if (!var) goto error;
+		if ((current_token + 1)->type != '(') {
+			variable *var = find_variable(current_token->identifier.name, current_token->identifier.length);
+			if (!var) goto error;
 
-		node *primary_node = allocate_node();
-		primary_node->type = NODE_VAR;
-		primary_node->var.addr = var->addr;
-		primary_node->var.pointer_indirections = var->pointer_indirections;
-		current_token += 1;
-		return primary_node;
+			node *primary_node = allocate_node();
+			primary_node->type = NODE_VAR;
+			primary_node->var.addr = var->addr;
+			primary_node->var.pointer_indirections = var->pointer_indirections;
+			current_token += 1;
+			return primary_node;
+		} else {
+			func *f = find_function(current_token->identifier.name, current_token->identifier.length);
+			if (!f) goto error;
+
+			node *function_call = allocate_node();
+			function_call->type = NODE_FUNC_CALL;
+			function_call->value = f->func_idx;
+
+			current_token += 1;
+			expect_token('(');
+			expect_token(')');
+
+			return function_call;
+		}
 	}
 
 	if (current_token->type == TOKEN_INT) {

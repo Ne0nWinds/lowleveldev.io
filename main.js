@@ -38,7 +38,7 @@ document.getElementById("run").onclick = async () => {
 	}
 };
 
-const RUN_TEST_CASES = 0;
+const RUN_TEST_CASES = 1;
 
 if (RUN_TEST_CASES) {
 	const test_cases = [
@@ -233,6 +233,7 @@ if (RUN_TEST_CASES) {
 	return (&a + 3) - &x + 3;
 }`, 4,
 		'int main() { return 5; } int x() { return 7 + 6; }', 5,
+		'int x() { return 5 + 5; }\nint main() { return x(); }', 10,
 	];
 	console.clear();
 

@@ -133,21 +133,6 @@ u8 create_wasm_layout(u8 *c, func *bst, u32 function_count) {
 	return c - start;
 }
 
-u8 create_code_section(u8 *c, u32 length) {
-	u32 byte_len2 = leb128_encode_len(length + 0);
-	u32 byte_len1 = leb128_encode_len(length + 1 + byte_len2);
-	u32 calculated_header_byte_length = byte_len2 + byte_len1 + 2;
-
-	__builtin_memcpy(c + calculated_header_byte_length, c, length);
-
-	*c++ = SECTION_CODE;
-	c += leb128_encode(c, length + 1 + byte_len2);
-	*c++ = 1;
-	c += leb128_encode(c, length + 0);
-
-	return calculated_header_byte_length;
-}
-
 u8 i32_const(u8 *c, i32 value) {
 	*c++ = I32_CONST;
 	return leb128_encode(c, value) + 1;
@@ -266,6 +251,11 @@ u8 block(u8 *c) {
 	*c++ = BLOCK;
 	*c = 0x40;
 	return 2;
+}
+
+u8 call(u8 *c, u32 index) {
+	*c++ = CALL;
+	return leb128_encode(c, index) + 1;
 }
 
 u8 end_code_block(u8 *c) {
