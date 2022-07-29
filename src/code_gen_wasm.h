@@ -1,10 +1,11 @@
 #pragma once
 #include "general.h"
+#include "parser.h"
 
 u8 create_module(u8 *c);
 u8 end_module(u8 *c);
 
-u8 create_main_function(u8 *c);
+u8 create_wasm_layout(u8 *c, func *bst, u32 function_count);
 u8 create_code_section(u8 *c, u32 length);
 u8 end_code_block(u8 *c);
 

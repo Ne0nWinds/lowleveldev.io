@@ -92,6 +92,49 @@ variable *find_variable(char *name, u32 length) {
 	return 0;
 }
 
+static func *function_bst;
+
+func *add_function(char *name, u32 length) {
+	func *new_function = bump_alloc(sizeof(func));
+	new_function->name = name;
+	new_function->length = length;
+
+	func *current = function_bst;
+	func *previous = 0;
+	u32 compare_result = 0;
+
+	while (current != 0) {
+		previous = current;
+
+		compare_result = string_compare(name, current->name, max(length, current->length));
+		if (compare_result == 0) {
+			return 0;
+		}
+
+		if (compare_result == -1) {
+			current = current->left;
+		}
+
+		if (compare_result == 1) {
+			current = current->right;
+		}
+	}
+
+	if (compare_result == -1) {
+		previous->left = new_function;
+	}
+
+	if (compare_result == 1) {
+		previous->right = new_function;
+	}
+
+	if (compare_result == 0) {
+		function_bst = new_function;
+	}
+
+	return new_function;
+}
+
 static node *free_node_stack = 0;
 
 static node *allocate_node() {
@@ -114,6 +157,7 @@ static void free_node(node *n) {
 	free_node_stack = n;
 }
 
+void function_decl();
 node *expr_stmt();
 node *expr();
 node *decl();
@@ -123,16 +167,20 @@ node *code_block_or_expr_stmt();
 node *code_block_or_expr_stmt();
 void expect_token(token_type c);
 
-node *parse_tokens(token_list tokens) {
+func *parse_tokens(token_list tokens, u32 *function_count) {
 	error_occurred = false;
 	current_token = tokens.tokens;
 	variable_bst = 0;
+	function_bst = 0;
 	stack_pointer = PAGE_SIZE - 4;
 	free_node_stack = 0;
 
-	node *block = code_block();
+	while (current_token->type && !error_occurred) {
+		function_decl();
+		*function_count += 1;
+	}
 
-	return (error_occurred) ? 0 : block;
+	return (error_occurred) ? 0 : function_bst;
 }
 
 void expect_token(token_type t) {
@@ -141,6 +189,20 @@ void expect_token(token_type t) {
 	} else {
 		error_occurred = true;
 	}
+}
+
+void function_decl() {
+	expect_token(TOKEN_INT_DECL);
+	if (current_token->type != TOKEN_IDENTIFIER) goto error;
+	func *function = add_function(current_token->identifier.name, current_token->identifier.length);
+	current_token += 1;
+	if (!function) goto error;
+	expect_token('(');
+	expect_token(')');
+	function->body = code_block();
+	return;
+error:
+	error_occurred = true;
 }
 
 node *code_block() {

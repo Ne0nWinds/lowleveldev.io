@@ -127,8 +127,9 @@ u8 end_module(u8 *c) {
 	return 0;
 }
 
-// hard code main function
-u8 create_main_function(u8 *c) {
+u8 create_wasm_layout(u8 *c, func *bst, u32 function_count) {
+
+	u8 *start = c;
 
 	c[0] = SECTION_TYPE;
 	c[1] = 0x5;
@@ -156,22 +157,28 @@ u8 create_main_function(u8 *c) {
 	c[4] = 0x1;
 	c += 5;
 
-	c[0] = SECTION_EXPORT;
-	c[1] = 0x08;
+	*c++ = SECTION_EXPORT;
+	u8 *export_length = c++;
 
-	c[2] = 0x1;
-	c[3] = 0x4;
-	c[4] = 'm';
-	c[5] = 'a';
-	c[6] = 'i';
-	c[7] = 'n';
+	func *function_stack[function_count];
+	function_stack[0] = bst;
+	u32 function_stack_length = 1;
 
-	c[8] = 0x0;
-	c[9] = 0x0;
+	*c++ = function_count;
+	for (u32 i = 0; i < function_count; ++i) {
+		func *f = function_stack[--function_stack_length];
+		*c++ = f->length;
+		__builtin_memcpy(c, f->name, f->length);
+		c += f->length;
+		*c++ = 0x0;
+		*c++ = 0x0;
+		if (f->right) function_stack[function_stack_length++] = f->right;
+		if (f->left) function_stack[function_stack_length++] = f->left;
+	}
 
-	c += 10;
+	*export_length = c - export_length - 1;
 
-	return 26;
+	return c - start;
 }
 
 u8 create_code_section(u8 *c, u32 length) {
@@ -185,7 +192,7 @@ u8 create_code_section(u8 *c, u32 length) {
 	c += leb128_encode(c, length + 2 + byte_len2);
 	*c++ = 1;
 	c += leb128_encode(c, length + 1);
-	*c++ = 0;
+	*c++ = 0; // vec(locals)
 
 	return calculated_header_byte_length;
 }

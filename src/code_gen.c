@@ -17,7 +17,7 @@ void gen_code_block(node *n) {
 	gen_expr(current_expr);
 }
 
-compile_result *gen_code(node *ast) {
+compile_result *gen_code(func *ast, u32 function_count) {
 
 	u8 *code = bump_alloc(0);
 	c = code;
@@ -25,11 +25,10 @@ compile_result *gen_code(node *ast) {
 
 	c += create_module(c);
 
-	c += create_main_function(c);
+	c += create_wasm_layout(c, ast, function_count);
 
 	u8 *code_section_start = c;
-
-	gen_code_block(ast);
+	gen_code_block(ast->body);
 
 	c += end_code_block(c);
 

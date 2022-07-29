@@ -61,4 +61,14 @@ struct node {
 	};
 };
 
-node *parse_tokens(token_list tokens);
+typedef struct func func;
+struct func {
+	char *name;
+	u32 length;
+	func *next;
+	node *body;
+	func *left;
+	func *right;
+};
+
+func *parse_tokens(token_list tokens, u32 *function_count);

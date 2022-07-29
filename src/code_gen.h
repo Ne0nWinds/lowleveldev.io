@@ -7,4 +7,4 @@ struct compile_result {
 	u8 *code;
 };
 
-compile_result *gen_code(node *ast);
+compile_result *gen_code(func *ast, u32 function_count);
