@@ -19,3 +19,9 @@ typedef int64_t i64;
 
 #define max(a, b) ((a > b) ? a : b)
 #define min(a, b) ((a < b) ? a : b)
+
+typedef struct identifier identifier;
+struct identifier {
+	char *name;
+	u32 length;
+};

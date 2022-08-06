@@ -64,8 +64,7 @@ struct node {
 
 typedef struct func func;
 struct func {
-	char *name;
-	u32 length;
+	identifier identifier;
 	u32 func_idx;
 	func *next;
 	node *body;

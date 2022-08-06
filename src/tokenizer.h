@@ -29,10 +29,7 @@ struct token {
 	u32 type;
 	union {
 		u32 value;
-		struct {
-			char *name;
-			u32 length;
-		} identifier;
+		identifier identifier;
 	};
 };
 

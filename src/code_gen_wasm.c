@@ -119,9 +119,9 @@ u8 create_wasm_layout(u8 *c, func *bst, u32 function_count) {
 	*c++ = function_count;
 	for (u32 i = 0; i < function_count; ++i) {
 		func *f = function_stack[--function_stack_length];
-		*c++ = f->length;
-		__builtin_memcpy(c, f->name, f->length);
-		c += f->length;
+		*c++ = f->identifier.length;
+		__builtin_memcpy(c, f->identifier.name, f->identifier.length);
+		c += f->identifier.length;
 		*c++ = 0x0;
 		*c++ = f->func_idx;
 		if (f->right) function_stack[function_stack_length++] = f->right;

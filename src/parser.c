@@ -7,8 +7,7 @@ bool error_occurred;
 
 typedef struct variable variable;
 struct variable {
-	char *name;
-	u32 length;
+	identifier identifier;
 	u32 addr;
 	u32 pointer_indirections;
 	variable *left;
@@ -18,18 +17,19 @@ struct variable {
 static variable *variable_bst;
 static u32 stack_pointer;
 
-int string_compare(char *a, char *b, u32 n) {
+int string_compare(identifier a, identifier b) {
+	u32 n = max(a.length, b.length);
 	for (u32 i = 0; i < n; ++i) {
-		if (a[i] != b[i]) return (a < b) ? -1 : 1;
+		if (a.name[i] != b.name[i])
+			return (a.name[i] < b.name[i]) ? -1 : 1;
 	}
 	return 0;
 }
 
-variable *add_variable(char *name, u32 length, u32 pointer_indirections) {
+variable *add_variable(identifier identifier, u32 pointer_indirections) {
 
 	variable *var = bump_alloc(sizeof(variable));
-	var->name = name;
-	var->length = length;
+	var->identifier = identifier;
 	var->addr = stack_pointer;
 	var->pointer_indirections = pointer_indirections;
 	stack_pointer -= 4;
@@ -41,7 +41,7 @@ variable *add_variable(char *name, u32 length, u32 pointer_indirections) {
 	while (current != 0) {
 		previous = current;
 
-		compare_result = string_compare(name, current->name, max(length, current->length));
+		compare_result = string_compare(identifier, current->identifier);
 		if (compare_result == 0) {
 			return 0;
 		}
@@ -70,11 +70,11 @@ variable *add_variable(char *name, u32 length, u32 pointer_indirections) {
 	return var;
 };
 
-variable *find_variable(char *name, u32 length) {
+variable *find_variable(identifier identifier) {
 	variable *current = variable_bst;
 
 	while (current != 0) {
-		u32 compare_result = string_compare(name, current->name, max(length, current->length));
+		u32 compare_result = string_compare(identifier, current->identifier);
 
 		if (compare_result == 0) {
 			return current;
@@ -95,10 +95,9 @@ variable *find_variable(char *name, u32 length) {
 static func *function_bst;
 static u32 global_function_count;
 
-func *add_function(char *name, u32 length) {
+func *add_function(identifier identifier) {
 	func *new_function = bump_alloc(sizeof(func));
-	new_function->name = name;
-	new_function->length = length;
+	new_function->identifier = identifier;
 	new_function->func_idx = global_function_count;
 	global_function_count += 1;
 
@@ -109,7 +108,7 @@ func *add_function(char *name, u32 length) {
 	while (current != 0) {
 		previous = current;
 
-		compare_result = string_compare(name, current->name, max(length, current->length));
+		compare_result = string_compare(identifier, current->identifier);
 		if (compare_result == 0) {
 			return 0;
 		}
@@ -138,11 +137,11 @@ func *add_function(char *name, u32 length) {
 	return new_function;
 }
 
-func *find_function(char *name, u32 length) {
+func *find_function(identifier identifier) {
 	func *current = function_bst;
 
 	while (current != 0) {
-		u32 compare_result = string_compare(name, current->name, max(length, current->length));
+		u32 compare_result = string_compare(identifier, current->identifier);
 
 		if (compare_result == 0) {
 			return current;
@@ -222,7 +221,7 @@ void expect_token(token_type t) {
 void function_decl() {
 	expect_token(TOKEN_INT_DECL);
 	if (current_token->type != TOKEN_IDENTIFIER) goto error;
-	func *function = add_function(current_token->identifier.name, current_token->identifier.length);
+	func *function = add_function(current_token->identifier);
 	current_token += 1;
 	if (!function) goto error;
 	expect_token('(');
@@ -288,7 +287,7 @@ node *decl() {
 			return 0;
 		}
 
-		variable *var = add_variable(current_token->identifier.name, current_token->identifier.length, pointer_indirections);
+		variable *var = add_variable(current_token->identifier, pointer_indirections);
 		if (!var) {
 			error_occurred = true;
 			return 0;
@@ -463,7 +462,7 @@ node *primary() {
 
 	if (current_token->type == TOKEN_IDENTIFIER) {
 		if ((current_token + 1)->type != '(') {
-			variable *var = find_variable(current_token->identifier.name, current_token->identifier.length);
+			variable *var = find_variable(current_token->identifier);
 			if (!var) goto error;
 
 			node *primary_node = allocate_node();
@@ -473,7 +472,7 @@ node *primary() {
 			current_token += 1;
 			return primary_node;
 		} else {
-			func *f = find_function(current_token->identifier.name, current_token->identifier.length);
+			func *f = find_function(current_token->identifier);
 			if (!f) goto error;
 
 			node *function_call = allocate_node();

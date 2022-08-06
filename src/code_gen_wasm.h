@@ -93,5 +93,3 @@ enum {
 	BR_IF = 0xD,
 	CALL = 0x10,
 };
-
-
