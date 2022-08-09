@@ -41,6 +41,10 @@ struct node {
 	union {
 		i32 value;
 		struct {
+			u32 index;
+			u32 stack_pointer;
+		} func_call;
+		struct {
 			u32 addr;
 			u32 pointer_indirections;
 		} var;
@@ -62,11 +66,27 @@ struct node {
 	};
 };
 
+typedef struct variable variable;
+struct variable {
+	identifier identifier;
+	u32 addr;
+	u32 pointer_indirections;
+	variable *left;
+	variable *right;
+};
+
+typedef struct variable_bst variable_bst;
+struct variable_bst {
+	variable *head;
+	u32 stack_pointer;
+};
+
 typedef struct func func;
 struct func {
 	identifier identifier;
 	u32 func_idx;
 	func *next;
+	variable_bst locals;
 	node *body;
 	func *left;
 	func *right;

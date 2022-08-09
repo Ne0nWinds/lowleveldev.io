@@ -83,6 +83,12 @@ enum {
 	I32_LOAD = 0x28,
 	I32_STORE = 0x36,
 
+	LOCAL_GET = 0x20,
+	LOCAL_SET = 0x21,
+	LOCAL_TEE = 0x22,
+	GLOBAL_GET = 0x23,
+	GLOBAL_SET = 0x24,
+
 	DROP = 0x1A,
 	RETURN = 0x0F,
 	BLOCK = 0x2,

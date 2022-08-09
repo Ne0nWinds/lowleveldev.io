@@ -1,8 +1,6 @@
 #include "code_gen.h"
 #include "code_gen_wasm.h"
 
-static node **stack;
-static u32 stack_size;
 static u8 *c;
 static bool error_occurred;
 
@@ -42,7 +40,15 @@ compile_result *gen_code(func *ast, u32 function_count) {
 		if (f->left) function_stack[function_stack_length++] = f->left;
 
 		u8 *func_start = c;
-		*c++ = 0; // vec(locals)
+		*c++ = 1; // vec(locals)
+		*c++ = 1;
+		*c++ = VALTYPE_I32;
+
+		*c++ = GLOBAL_GET;
+		*c++ = 0;
+		*c++ = LOCAL_SET;
+		*c++ = 0;
+
 		gen_code_block(f->body);
 		c += end_code_block(c);
 		u32 length = c - func_start;
@@ -67,7 +73,13 @@ compile_result *gen_code(func *ast, u32 function_count) {
 
 void gen_addr(node *n) {
 	if (n->type == NODE_VAR) {
-		c += i32_const(c, n->var.addr);
+		*c++ = LOCAL_GET;
+		*c++ = 0;
+
+		if (n->var.addr > 0) {
+			c += i32_const(c, n->var.addr);
+			c += i32_sub(c);
+		}
 		return;
 	}
 	if (n->type == NODE_DEREF) {
@@ -87,13 +99,23 @@ void gen_expr(node *n) {
 	}
 
 	if (n->type == NODE_VAR) {
-		c += i32_const(c, 0);
-		c += i32_load(c, 2, n->var.addr);
+		gen_addr(n);
+		c += i32_load(c, 2, 0);
 		return;
 	}
 
 	if (n->type == NODE_FUNC_CALL) {
-		c += call(c, n->value);
+		*c++ += LOCAL_GET;
+		*c++ += 0;
+		c += i32_const(c, n->func_call.stack_pointer);
+		c += i32_sub(c);
+		*c++ = GLOBAL_SET;
+		*c++ = 0;
+		c += call(c, n->func_call.index);
+		*c++ += LOCAL_GET;
+		*c++ += 0;
+		*c++ += GLOBAL_SET;
+		*c++ += 0;
 		return;
 	}
 
@@ -104,7 +126,7 @@ void gen_expr(node *n) {
 	}
 
 	if (n->type == NODE_ADDRESS) {
-		c += i32_const(c, n->right->var.addr);
+		gen_addr(n->right);
 		return;
 	}
 
@@ -124,9 +146,14 @@ void gen_expr(node *n) {
 	}
 
 	if (n->type == NODE_INT_DECL) {
-		c += i32_const(c, 0);
+		*c++ = GLOBAL_GET;
+		*c++ = 0;
+		if (n->var.addr > 0) {
+			c += i32_const(c, n->var.addr);
+			c += i32_sub(c);
+		}
 		gen_expr(n->right);
-		c += i32_store(c, 2, n->var.addr);
+		c += i32_store(c, 2, 0);
 		c += i32_const(c, 0);
 		return;
 	}

@@ -5,17 +5,7 @@ token *current_token;
 
 bool error_occurred;
 
-typedef struct variable variable;
-struct variable {
-	identifier identifier;
-	u32 addr;
-	u32 pointer_indirections;
-	variable *left;
-	variable *right;
-};
-
-static variable *variable_bst;
-static u32 stack_pointer;
+static func *current_function;
 
 int string_compare(identifier a, identifier b) {
 	u32 n = max(a.length, b.length);
@@ -30,11 +20,11 @@ variable *add_variable(identifier identifier, u32 pointer_indirections) {
 
 	variable *var = bump_alloc(sizeof(variable));
 	var->identifier = identifier;
-	var->addr = stack_pointer;
+	var->addr = current_function->locals.stack_pointer;
 	var->pointer_indirections = pointer_indirections;
-	stack_pointer -= 4;
+	current_function->locals.stack_pointer += 4;
 
-	variable *current = variable_bst;
+	variable *current = current_function->locals.head;
 	variable *previous = 0;
 	u32 compare_result = 0;
 
@@ -64,14 +54,14 @@ variable *add_variable(identifier identifier, u32 pointer_indirections) {
 	}
 
 	if (compare_result == 0) {
-		variable_bst = var;
+		current_function->locals.head = var;
 	}
 
 	return var;
 };
 
 variable *find_variable(identifier identifier) {
-	variable *current = variable_bst;
+	variable *current = current_function->locals.head;
 
 	while (current != 0) {
 		u32 compare_result = string_compare(identifier, current->identifier);
@@ -194,15 +184,12 @@ void expect_token(token_type c);
 func *parse_tokens(token_list tokens, u32 *function_count) {
 	error_occurred = false;
 	current_token = tokens.tokens;
-	variable_bst = 0;
 	function_bst = 0;
 	global_function_count = 0;
-	stack_pointer = PAGE_SIZE - 4;
 	free_node_stack = 0;
 
 	while (current_token->type && !error_occurred) {
 		function_decl();
-		variable_bst = 0;
 	}
 
 	*function_count = global_function_count;
@@ -226,6 +213,8 @@ void function_decl() {
 	if (!function) goto error;
 	expect_token('(');
 	expect_token(')');
+	current_function = function;
+	current_function->locals.stack_pointer = 0;
 	function->body = code_block();
 	return;
 error:
@@ -477,7 +466,8 @@ node *primary() {
 
 			node *function_call = allocate_node();
 			function_call->type = NODE_FUNC_CALL;
-			function_call->value = f->func_idx;
+			function_call->func_call.index = f->func_idx;
+			function_call->func_call.stack_pointer = current_function->locals.stack_pointer;
 
 			current_token += 1;
 			expect_token('(');

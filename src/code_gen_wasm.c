@@ -109,6 +109,15 @@ u8 create_wasm_layout(u8 *c, func *bst, u32 function_count) {
 	c[4] = 0x1;
 	c += 5;
 
+	*c++ = SECTION_GLOBAL;
+	*c++ = 8;
+	*c++ = 0x1;
+	*c++ = VALTYPE_I32;
+	*c++ = 0x1;
+	*c++ = I32_CONST;
+	c += encode_integer(c, PAGE_SIZE - 4); // length of 3
+	*c++ = 0xB;
+
 	*c++ = SECTION_EXPORT;
 	u8 *export_length = c++;
 

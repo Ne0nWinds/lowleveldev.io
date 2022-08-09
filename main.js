@@ -234,6 +234,14 @@ if (RUN_TEST_CASES) {
 }`, 4,
 		'int main() { return 5; } int x() { return 7 + 6; }', 5,
 		'int x() { return 5 + 5; }\nint main() { return x(); }', 10,
+`int x() {
+	int j = 20;
+	return j;
+}
+int main() {
+	int j = 5;
+	return x() + j;
+}`, 25,
 	];
 	console.clear();
 
