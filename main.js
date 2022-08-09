@@ -319,6 +319,21 @@ int main() {
 	for (i = 0; i < 10; i = i + 1);
 	return i;
 }`, 10,
+`int main() {
+	int x = 10;
+	while ((x = x - 1) > 5);
+	return x;
+}`, 5,
+`int main() {
+	int x = 10;
+	do ; while ((x = x - 1) > 5);
+	return x;
+}`, 5,
+`int main() {
+	int x = 4;
+	do ; while ((x = x - 1) > 5);
+	return x;
+}`, 3,
 	];
 	console.clear();
 

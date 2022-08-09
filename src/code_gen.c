@@ -141,7 +141,9 @@ void gen_expr(node *n) {
 		gen_addr(n->left);
 		gen_expr(n->right);
 		c += i32_store(c, 2, 0);
-		c += i32_const(c, 0);
+
+		gen_addr(n->left);
+		c += i32_load(c, 2, 0);
 		return;
 	}
 
@@ -211,8 +213,10 @@ void gen_expr(node *n) {
 		c += loop(c);
 		c += block(c);
 
-		gen_code_block(n->loop_stmt.body);
-		c += drop(c);
+		if (n->loop_stmt.body) {
+			gen_code_block(n->loop_stmt.body);
+			c += drop(c);
+		}
 
 		gen_expr(n->loop_stmt.condition);
 		c += i32_eqz(c);
