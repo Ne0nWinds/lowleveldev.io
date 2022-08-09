@@ -189,8 +189,10 @@ void gen_expr(node *n) {
 		c += i32_eqz(c);
 		c += br_if(c, 0);
 
-		gen_code_block(n->loop_stmt.body);
-		c += drop(c);
+		if (n->loop_stmt.body) {
+			gen_code_block(n->loop_stmt.body);
+			c += drop(c);
+		}
 
 		if (n->loop_stmt.iteration) {
 			gen_code_block(n->loop_stmt.iteration);

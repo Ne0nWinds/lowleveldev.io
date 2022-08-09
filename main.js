@@ -242,6 +242,83 @@ int main() {
 	int j = 5;
 	return x() + j;
 }`, 25,
+`int function1() {
+	int x = 1;
+	for (int i = 0; i < 6; i = i + 1) {
+		x = x * 2;
+	}
+	return x;
+}
+
+int main() {
+	int x = 32;
+	return function1() + x;
+}`, 96,
+`int function2() {
+	int x = 100;
+	return x;
+}
+
+int function1() {
+	int x = 1;
+	for (int i = 0; i < 6; i = i + 1) {
+		x = x * 2;
+	}
+	return function2() + x;
+}
+
+int main() {
+	int x = 32;
+	return function1() + x;
+}`, 196,
+`int function2() {
+	int x = 50;
+	int j = 50;
+	return x + j + 4;
+}
+
+int function1() {
+	int x = 1;
+	for (int i = 0; i < 6; i = i + 1) {
+		x = x * 2;
+	}
+	return function2() + x;
+}
+
+int main() {
+	int x = 32;
+	return function1() + x;
+}`, 200,
+`int function2() {
+	int x = 50;
+	int j = 50;
+	return x + j;
+}
+
+int function1() {
+	int x = 1;
+	for (int i = 0; i < 6; i = i + 1) {
+		x = x + function2();
+	}
+	return x;
+}
+
+int main() {
+	int x = 50;
+	return function1() + x;
+}`, 651,
+`int main() {
+	return 5;;
+}`, 5,
+`int main() {
+	int x = 5;;
+	return x;
+}`, 5,
+`int main() {
+	int i = 0;
+	for (i = 0; i < 10; i = i + 1);
+	return i;
+}`, 10,
 	];
 	console.clear();
 

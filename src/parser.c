@@ -236,7 +236,8 @@ node *code_block() {
 		}
 
 		current->next = expr_stmt();
-		current = current->next;
+		if (current->next != 0)
+			current = current->next;
 
 		while (current_token->type == '}' && depth > 0) {
 			--depth;
@@ -379,6 +380,11 @@ node *expr_stmt() {
 
 		expect_token(';');
 		return return_node;
+	}
+
+	if (current_token->type == ';') {
+		current_token += 1;
+		return 0;
 	}
 
 	node *n = expr();
