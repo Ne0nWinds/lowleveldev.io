@@ -105,9 +105,24 @@ void gen_expr(node *n) {
 	}
 
 	if (n->type == NODE_FUNC_CALL) {
-		*c++ += LOCAL_GET;
-		*c++ += 0;
-		c += i32_const(c, n->func_call.stack_pointer);
+
+		u32 stack_pointer = n->func_call.stack_pointer;
+		node *current = n->func_call.args;
+		while (current) {
+			*c++ = LOCAL_GET;
+			*c++ = 0;
+			c += i32_const(c, stack_pointer);
+			c += i32_sub(c);
+			gen_expr(current);
+			c += i32_store(c, 2, 0);
+			
+			stack_pointer += 4;
+			current = current->next;
+		}
+
+		*c++ = LOCAL_GET;
+		*c++ = 0;
+		c += i32_const(c, stack_pointer);
 		c += i32_sub(c);
 		*c++ = GLOBAL_SET;
 		*c++ = 0;

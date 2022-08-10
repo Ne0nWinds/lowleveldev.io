@@ -334,6 +334,22 @@ int main() {
 	do ; while ((x = x - 1) > 5);
 	return x;
 }`, 3,
+`int func(int x) {
+	return x + 1;
+}
+
+int main() {
+	return func(5);
+}`, 6,
+`int fib(int n) {
+    if (n <= 1)
+        return n;
+    return fib(n-1) + fib(n-2);
+}
+
+int main() {
+    return fib(9);
+}`, 34
 	];
 	console.clear();
 
@@ -362,19 +378,26 @@ int main() {
 	}
 
 	const error_test_cases = [
-		'{ 0 }',
+		'int main() { 0 }',
 		// '{ 1 + * 5; }', properly testing this requires type checking
-		'{ 1 + / 8; }',
-		'{ 1 + 5 +; }',
-		'{ 1 + > 5; }',
-		'{ (1024 * 2 - 512 + 89 < 2 * 2 * -1 + 768; }',
-		'{ int = 5 }',
-		'{ x = 5 }',
-		'{ int ab = 10; a; }',
-		'{ 5;',
-		'{{{ 0; }}',
-		'{ int x = 27; { x = x + 1; { 2; } return x; }',
+		'int main() { 1 + / 8; }',
+		'int main() { 1 + 5 +; }',
+		'int main() { 1 + > 5; }',
+		'int main() { (1024 * 2 - 512 + 89 < 2 * 2 * -1 + 768; }',
+		'int main() { int = 5 }',
+		'int main() { x = 5 }',
+		'int main() { int ab = 10; a; }',
+		'int main() { 5;',
+		'int main() {{{ 0; }}',
+		'int main() { int x = 27; { x = x + 1; { 2; } return x; }',
 		'int x = 27; { x = x + 1; { 2; }} return x; }',
+`int function1() {
+    return 88;
+}
+
+int main() {
+    return function();
+}`,
 	];
 
 	test_case_failure = false;

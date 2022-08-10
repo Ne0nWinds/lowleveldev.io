@@ -18,20 +18,20 @@ int string_compare(identifier a, identifier b) {
 
 variable *add_variable(identifier identifier, u32 pointer_indirections) {
 
-	variable *var = bump_alloc(sizeof(variable));
-	var->identifier = identifier;
-	var->addr = current_function->locals.stack_pointer;
-	var->pointer_indirections = pointer_indirections;
+	variable_node *var = bump_alloc(sizeof(variable_node));
+	var->variable.identifier = identifier;
+	var->variable.addr = current_function->locals.stack_pointer;
+	var->variable.pointer_indirections = pointer_indirections;
 	current_function->locals.stack_pointer += 4;
 
-	variable *current = current_function->locals.head;
-	variable *previous = 0;
+	variable_node *current = current_function->locals.head;
+	variable_node *previous = 0;
 	u32 compare_result = 0;
 
 	while (current != 0) {
 		previous = current;
 
-		compare_result = string_compare(identifier, current->identifier);
+		compare_result = string_compare(identifier, current->variable.identifier);
 		if (compare_result == 0) {
 			return 0;
 		}
@@ -57,17 +57,26 @@ variable *add_variable(identifier identifier, u32 pointer_indirections) {
 		current_function->locals.head = var;
 	}
 
-	return var;
+	return &var->variable;
 };
 
 variable *find_variable(identifier identifier) {
-	variable *current = current_function->locals.head;
+
+	variable *arg = current_function->args;
+	for (u32 i = 0; i < current_function->arg_count; ++i) {
+		u32 compare_result = string_compare(identifier, arg[i].identifier);
+		if (!compare_result) {
+			return arg + i;
+		}
+	}
+
+	variable_node *current = current_function->locals.head;
 
 	while (current != 0) {
-		u32 compare_result = string_compare(identifier, current->identifier);
+		u32 compare_result = string_compare(identifier, current->variable.identifier);
 
 		if (compare_result == 0) {
-			return current;
+			return &current->variable;
 		}
 
 		if (compare_result == -1) {
@@ -211,10 +220,50 @@ void function_decl() {
 	func *function = add_function(current_token->identifier);
 	current_token += 1;
 	if (!function) goto error;
+
 	expect_token('(');
+
+	function->locals.stack_pointer = 0;
+	function->arg_count = 0;
+	if (current_token->type == TOKEN_INT_DECL) {
+		current_token += 1;
+
+		u32 pointer_indirections = 0;
+		while (current_token->type == '*') {
+			pointer_indirections += 1;
+			current_token += 1;
+		}
+
+		if (current_token->type != TOKEN_IDENTIFIER) goto error;
+		function->arg_count = 1;
+		variable *args = bump_alloc(sizeof(variable));
+		function->args = args;
+		args[0].identifier = current_token->identifier;
+		args[0].addr = function->arg_count * -4;
+		args[0].pointer_indirections = 0;
+		current_token += 1;
+
+		while (current_token->type == ',') {
+			current_token += 1;
+			expect_token(TOKEN_INT_DECL);
+
+			u32 pointer_indirections = 0;
+			while (current_token->type == '*') {
+				pointer_indirections += 1;
+				current_token += 1;
+			}
+
+			if (current_token->type != TOKEN_IDENTIFIER) goto error;
+			variable *arg = bump_alloc(sizeof(variable));
+			arg->identifier = current_token->identifier;
+			function->arg_count += 1;
+			current_token += 1;
+		}
+	}
+
 	expect_token(')');
+
 	current_function = function;
-	current_function->locals.stack_pointer = 0;
 	function->body = code_block();
 	return;
 error:
@@ -477,6 +526,21 @@ node *primary() {
 
 			current_token += 1;
 			expect_token('(');
+
+			if (f->arg_count) {
+				u32 arg_count = 1;
+				node *current = expr();
+				function_call->func_call.args = current;
+				while (!error_occurred && arg_count < f->arg_count && current_token->type == ',') {
+					arg_count += 1;
+					current_token += 1;
+					current->next = expr();
+					current = current->next;
+				}
+
+				if (arg_count != f->arg_count) goto error;
+			}
+
 			expect_token(')');
 
 			return function_call;

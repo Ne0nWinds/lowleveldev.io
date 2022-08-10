@@ -43,6 +43,7 @@ struct node {
 		struct {
 			u32 index;
 			u32 stack_pointer;
+			node *args;
 		} func_call;
 		struct {
 			u32 addr;
@@ -69,15 +70,20 @@ struct node {
 typedef struct variable variable;
 struct variable {
 	identifier identifier;
-	u32 addr;
+	i32 addr;
 	u32 pointer_indirections;
-	variable *left;
-	variable *right;
+};
+
+typedef struct variable_node variable_node;
+struct variable_node {
+	variable variable;
+	variable_node *left;
+	variable_node *right;
 };
 
 typedef struct variable_bst variable_bst;
 struct variable_bst {
-	variable *head;
+	variable_node *head;
 	u32 stack_pointer;
 };
 
@@ -85,8 +91,9 @@ typedef struct func func;
 struct func {
 	identifier identifier;
 	u32 func_idx;
-	func *next;
 	variable_bst locals;
+	variable *args;
+	u32 arg_count;
 	node *body;
 	func *left;
 	func *right;
