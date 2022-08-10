@@ -202,9 +202,11 @@ void gen_expr(node *n) {
 		c += loop(c);
 		c += block(c);
 
-		gen_expr(n->loop_stmt.condition);
-		c += i32_eqz(c);
-		c += br_if(c, 0);
+		if (n->loop_stmt.condition) {
+			gen_expr(n->loop_stmt.condition);
+			c += i32_eqz(c);
+			c += br_if(c, 0);
+		}
 
 		if (n->loop_stmt.body) {
 			gen_code_block(n->loop_stmt.body);

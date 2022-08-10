@@ -372,6 +372,19 @@ int main() {
 int main() {
     return add(6, 5);
 }`, 35,
+`int main() {
+	int i = 0;
+	for (; i < 10; i = i + 1);
+	return i;
+}`, 10,
+`int main() {
+	int i = 5;
+	for (;;) {
+		i = i + 1;
+		if (i == 10) return i;
+	}
+	return i;
+}`, 10,
 	];
 	console.clear();
 

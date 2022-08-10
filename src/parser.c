@@ -383,11 +383,14 @@ node *expr_stmt() {
 		for_loop->type = NODE_LOOP;
 
 		expect_token('(');
-		for_loop->loop_stmt.start = (current_token->type == TOKEN_INT_DECL) ? decl() : expr();
+		if (current_token->type != ';')
+			for_loop->loop_stmt.start = (current_token->type == TOKEN_INT_DECL) ? decl() : expr();
 		expect_token(';');
-		for_loop->loop_stmt.condition = expr();
+		if (current_token->type != ';')
+			for_loop->loop_stmt.condition = expr();
 		expect_token(';');
-		for_loop->loop_stmt.iteration = expr();
+		if (current_token->type != ')')
+			for_loop->loop_stmt.iteration = expr();
 		expect_token(')');
 
 		for_loop->loop_stmt.body = code_block_or_expr_stmt();
