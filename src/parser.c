@@ -236,8 +236,7 @@ void function_decl() {
 
 		if (current_token->type != TOKEN_IDENTIFIER) goto error;
 		function->arg_count = 1;
-		variable *args = bump_alloc(sizeof(variable));
-		function->args = args;
+		variable *args = bump_alloc(0);
 		args[0].identifier = current_token->identifier;
 		args[0].addr = function->arg_count * -4;
 		args[0].pointer_indirections = 0;
@@ -254,11 +253,15 @@ void function_decl() {
 			}
 
 			if (current_token->type != TOKEN_IDENTIFIER) goto error;
-			variable *arg = bump_alloc(sizeof(variable));
-			arg->identifier = current_token->identifier;
+			variable *arg = args + function->arg_count;
 			function->arg_count += 1;
+			arg->identifier = current_token->identifier;
+			arg->addr = function->arg_count * -4;
+			arg->pointer_indirections = pointer_indirections;
 			current_token += 1;
 		}
+		function->args = args;
+		bump_alloc(sizeof(variable) * function->arg_count);
 	}
 
 	expect_token(')');

@@ -342,14 +342,36 @@ int main() {
 	return func(5);
 }`, 6,
 `int fib(int n) {
-    if (n <= 1)
-        return n;
-    return fib(n-1) + fib(n-2);
+	if (n <= 1)
+		return n;
+	return fib(n-1) + fib(n-2);
 }
 
 int main() {
-    return fib(9);
-}`, 34
+	return fib(9);
+}`, 34,
+`int mul(int a, int b) {
+	return a * b;
+}
+int main() {
+	return mul(2, 5);
+}`, 10,
+`int multiply(int a, int b) {
+    return a * b;
+}
+
+int main() {
+    return multiply(5, 10) + multiply(4, 3);
+}`, 62,
+`int add(int a, int b) {
+    if (a == 0) return 0;
+    if (b == 0) return 0;
+	return a + b + add(a - 1, b - 1);
+}
+
+int main() {
+    return add(6, 5);
+}`, 35,
 	];
 	console.clear();
 
@@ -392,11 +414,11 @@ int main() {
 		'int main() { int x = 27; { x = x + 1; { 2; } return x; }',
 		'int x = 27; { x = x + 1; { 2; }} return x; }',
 `int function1() {
-    return 88;
+	return 88;
 }
 
 int main() {
-    return function();
+	return function();
 }`,
 	];
 
