@@ -42,7 +42,6 @@ struct node {
 		i32 value;
 		struct {
 			u32 index;
-			u32 stack_pointer;
 			node *args;
 		} func_call;
 		struct {

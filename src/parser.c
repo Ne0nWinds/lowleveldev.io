@@ -528,20 +528,24 @@ node *primary() {
 			node *function_call = allocate_node();
 			function_call->type = NODE_FUNC_CALL;
 			function_call->func_call.index = f->func_idx;
-			function_call->func_call.stack_pointer = current_function->locals.stack_pointer;
 
 			current_token += 1;
 			expect_token('(');
 
 			if (f->arg_count) {
 				u32 arg_count = 1;
+
 				node *current = expr();
+				current->next = 0;
+
 				function_call->func_call.args = current;
+
 				while (!error_occurred && arg_count < f->arg_count && current_token->type == ',') {
 					arg_count += 1;
 					current_token += 1;
-					current->next = expr();
-					current = current->next;
+					current = expr();
+					current->next = function_call->func_call.args;
+					function_call->func_call.args = current;
 				}
 
 				if (arg_count != f->arg_count) goto error;
@@ -677,7 +681,7 @@ node *expr() {
 		u32 prev_prec = (op_stack->type != 0) ? get_precedence(op_stack->type) : 0;
 		u32 current_prec = get_precedence(type);
 
-		if (current_prec < prev_prec) {
+		if (current_prec <= prev_prec) {
 			node *primary = primary_stack;
 			primary_stack = primary_stack->next;
 
@@ -688,7 +692,7 @@ node *expr() {
 
 			node *local_top = op_node;
 
-			while (op_stack && current_prec < get_precedence(op_stack->type)) {
+			while (op_stack && current_prec <= get_precedence(op_stack->type)) {
 				primary = primary_stack;
 				primary_stack = primary_stack->next;
 

@@ -46,6 +46,8 @@ if (RUN_TEST_CASES) {
 		'int main() { 27; }', 27,
 		'int main() { 1 + 5; }', 6,
 		'int main() { 5 * 5; }', 25,
+		'int main() { 32 - 16 - 8; }', 8,
+		'int main() { 16 * 2 - 8 * 2 - 4 * 2; }', 8,
 		'int main() { 10 / 2; }', 5,
 		'int main() { 5 * 5 + 1; }', 26,
 		'int main() { 1 + 5 * 5; }', 26,
@@ -230,7 +232,7 @@ if (RUN_TEST_CASES) {
 `int main() {
 	int a = 128;
 	int x = 256;
-	return (&a + 3) - &x + 3;
+	return (&a + 3) - (&x + 3);
 }`, 4,
 		'int main() { return 5; } int x() { return 7 + 6; }', 5,
 		'int x() { return 5 + 5; }\nint main() { return x(); }', 10,
@@ -357,20 +359,20 @@ int main() {
 	return mul(2, 5);
 }`, 10,
 `int multiply(int a, int b) {
-    return a * b;
+	return a * b;
 }
 
 int main() {
-    return multiply(5, 10) + multiply(4, 3);
+	return multiply(5, 10) + multiply(4, 3);
 }`, 62,
 `int add(int a, int b) {
-    if (a == 0) return 0;
-    if (b == 0) return 0;
+	if (a == 0) return 0;
+	if (b == 0) return 0;
 	return a + b + add(a - 1, b - 1);
 }
 
 int main() {
-    return add(6, 5);
+	return add(6, 5);
 }`, 35,
 `int main() {
 	int i = 0;
@@ -403,6 +405,30 @@ int main() {
 int main() {
 	return add(add(10, 15), add(2, 3));
 }`, 30,
+`int large_function(int a, int b, int c, int d, int e, int f, int g, int h) {
+	return a + b + c + d + e + f + g + h;
+}
+int main() {
+	return large_function(1, 1, 2, 3, 5, 8, 13, 21);
+}`, 54,
+`int large_function(int a, int b, int c, int d, int e, int f, int g, int h) {
+	return a + b + c + d + e + f + g + h;
+}
+int main() {
+	return large_function(1, 1, 2, 3, 5, 8, 13, 21) + large_function(1, 2, 3, 4, 5, 6, 7, 8);
+}`, 90,
+`int sub(int a, int b) {
+	return a - b;
+}
+int main() {
+	return sub(10, 5);
+}`, 5,
+`int sub(int a, int b, int c, int d, int e) {
+	return a - b - c - d - e;
+}
+int main() {
+	return sub(1024, 512, 256, 128, 64);
+}`, 64,
 	];
 	console.clear();
 
