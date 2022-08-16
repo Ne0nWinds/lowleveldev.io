@@ -106,31 +106,36 @@ void gen_expr(node *n) {
 
 	if (n->type == NODE_FUNC_CALL) {
 
-		u32 stack_pointer = n->func_call.stack_pointer;
+		u32 arg_count = 0;
 		node *current = n->func_call.args;
 		while (current) {
-			*c++ = LOCAL_GET;
+			*c++ = GLOBAL_GET;
 			*c++ = 0;
-			c += i32_const(c, stack_pointer);
-			c += i32_sub(c);
 			gen_expr(current);
 			c += i32_store(c, 2, 0);
-			
-			stack_pointer += 4;
+
+			*c++ = GLOBAL_GET;
+			*c++ = 0;
+			c += i32_const(c, 4);
+			c += i32_sub(c);
+			*c++ = GLOBAL_SET;
+			*c++ = 0;
+
+			++arg_count;
 			current = current->next;
 		}
 
-		*c++ = LOCAL_GET;
-		*c++ = 0;
-		c += i32_const(c, stack_pointer);
-		c += i32_sub(c);
-		*c++ = GLOBAL_SET;
-		*c++ = 0;
 		c += call(c, n->func_call.index);
-		*c++ += LOCAL_GET;
-		*c++ += 0;
-		*c++ += GLOBAL_SET;
-		*c++ += 0;
+
+		if (arg_count) {
+			*c++ = GLOBAL_GET;
+			*c++ = 0;
+			c += i32_const(c, 4 * arg_count);
+			c += i32_add(c);
+			*c++ = GLOBAL_SET;
+			*c++ = 0;
+		}
+
 		return;
 	}
 
@@ -163,12 +168,20 @@ void gen_expr(node *n) {
 	}
 
 	if (n->type == NODE_INT_DECL) {
-		*c++ = GLOBAL_GET;
+		*c++ = LOCAL_GET;
 		*c++ = 0;
 		if (n->var.addr > 0) {
 			c += i32_const(c, n->var.addr);
 			c += i32_sub(c);
 		}
+
+		*c++ = GLOBAL_GET;
+		*c++ = 0;
+		c += i32_const(c, 4);
+		c += i32_sub(c);
+		*c++ = GLOBAL_SET;
+		*c++ = 0;
+
 		gen_expr(n->right);
 		c += i32_store(c, 2, 0);
 		c += i32_const(c, 0);

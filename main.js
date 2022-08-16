@@ -385,6 +385,24 @@ int main() {
 	}
 	return i;
 }`, 10,
+`int add(int a, int b) {
+	return a + b;
+}
+int main() {
+	return add(5, add(10, 15));
+}`, 30,
+`int add(int a, int b) {
+	return a + b;
+}
+int main() {
+	return add(add(10, 15), 5);
+}`, 30,
+`int add(int a, int b) {
+	return a + b;
+}
+int main() {
+	return add(add(10, 15), add(2, 3));
+}`, 30,
 	];
 	console.clear();
 
