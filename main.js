@@ -6,16 +6,22 @@ editor.resize();
 
 window.compiler = compiler;
 
+const code_size = [];
+const compile_times = [];
+
 const compile = (text) => {
 	const code_ptr = compiler.bump_alloc_src_code(text.length + 1);
 	const u8Array = new Uint8Array(compiler.memory.buffer, code_ptr, text.length + 1);
 	const text_encoder = new TextEncoder('utf-8');
 	text_encoder.encodeInto(text, u8Array);
 
+	const start = window.performance.now();
 	const compile_result_ptr = compiler.compile(code_ptr, u8Array.byteLength);
+	compile_times.push(window.performance.now() - start);
 	if (!compile_result_ptr) return null;
 
 	const compile_result = new Uint32Array(compiler.memory.buffer, compile_result_ptr, 2);
+	code_size.push(compile_result[0]);
 	const code = new Uint8Array(compiler.memory.buffer, compile_result[1], compile_result[0]);
 
 	return code;
@@ -454,6 +460,11 @@ int main() {
 
 	if (!test_case_failure) {
 		console.log("All test cases passed!");
+		const len = code_size.length;
+		console.log(`Avg code size: ${Math.round(code_size.reduce((prev, current, index) => prev + current / len, 0))} bytes`);
+		console.log(`Max code size: ${code_size.reduce((prev, current, index) => Math.max(prev, current), 0)} bytes`);
+		console.log(`Avg compile time: ${Math.round(compile_times.reduce((prev, current, index) => prev + current / len, 0))}ms`);
+		console.log(`Max compile time: ${Math.round(compile_times.reduce((prev, current, index) => Math.max(prev, current), 0))}ms`);
 	}
 
 	const error_test_cases = [

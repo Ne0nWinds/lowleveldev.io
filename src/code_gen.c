@@ -108,6 +108,16 @@ void gen_expr(node *n) {
 
 		u32 arg_count = 0;
 		node *current = n->func_call.args;
+
+		if (n->func_call.stack_pointer > 0) {
+			*c++ = GLOBAL_GET;
+			*c++ = 0;
+			c += i32_const(c, n->func_call.stack_pointer);
+			c += i32_sub(c);
+			*c++ = GLOBAL_SET;
+			*c++ = 0;
+		}
+
 		while (current) {
 			*c++ = GLOBAL_GET;
 			*c++ = 0;
@@ -174,13 +184,6 @@ void gen_expr(node *n) {
 			c += i32_const(c, n->var.addr);
 			c += i32_sub(c);
 		}
-
-		*c++ = GLOBAL_GET;
-		*c++ = 0;
-		c += i32_const(c, 4);
-		c += i32_sub(c);
-		*c++ = GLOBAL_SET;
-		*c++ = 0;
 
 		gen_expr(n->right);
 		c += i32_store(c, 2, 0);
