@@ -488,6 +488,13 @@ int main() {
 int main() {
 	return function();
 }`,
+`int function1(int a) {
+	return a;
+}
+
+int main() {
+	return function1();
+}`,
 	];
 
 	test_case_failure = false;

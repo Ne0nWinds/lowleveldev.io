@@ -527,6 +527,7 @@ node *primary() {
 
 			node *function_call = allocate_node();
 			function_call->type = NODE_FUNC_CALL;
+			function_call->func_call.stack_pointer = current_function->locals.stack_pointer;
 			function_call->func_call.index = f->func_idx;
 
 			current_token += 1;
@@ -577,14 +578,18 @@ void simplify_node(node *n) {
 			node *mul = allocate_node();
 			mul->type = NODE_MULTIPLY;
 
-			node *ptr_multipler = allocate_node();
-			ptr_multipler->type = NODE_INT;
-			ptr_multipler->value = 4;
+			if (n->right->type == NODE_INT) {
+				n->right->value *= 4;
+			} else {
+				node *ptr_multipler = allocate_node();
+				ptr_multipler->type = NODE_INT;
+				ptr_multipler->value = 4;
 
-			mul->left = n->right;
-			mul->right = ptr_multipler;
+				mul->left = n->right;
+				mul->right = ptr_multipler;
 
-			n->right = mul;
+				n->right = mul;
+			}
 		}
 	}
 
