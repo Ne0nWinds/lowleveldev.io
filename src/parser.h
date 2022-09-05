@@ -99,4 +99,4 @@ struct func {
 	func *right;
 };
 
-func *parse_tokens(token_list tokens, u32 *function_count);
+func *parse_tokens(u32 *function_count);

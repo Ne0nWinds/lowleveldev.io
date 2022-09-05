@@ -1,7 +1,6 @@
 #include "parser.h"
 #include "memory.h"
-
-token *current_token;
+#include "tokenizer.h"
 
 bool error_occurred;
 
@@ -190,14 +189,13 @@ node *code_block_or_expr_stmt();
 node *code_block_or_expr_stmt();
 void expect_token(token_type c);
 
-func *parse_tokens(token_list tokens, u32 *function_count) {
+func *parse_tokens(u32 *function_count) {
 	error_occurred = false;
-	current_token = tokens.tokens;
 	function_bst = 0;
 	global_function_count = 0;
 	free_node_stack = 0;
 
-	while (current_token->type && !error_occurred) {
+	while (current_token().type && !error_occurred) {
 		function_decl();
 	}
 
@@ -207,8 +205,8 @@ func *parse_tokens(token_list tokens, u32 *function_count) {
 }
 
 void expect_token(token_type t) {
-	if (current_token->type == t) {
-		current_token += 1;
+	if (current_token().type == t) {
+		advance_token();
 	} else {
 		error_occurred = true;
 	}
@@ -216,49 +214,49 @@ void expect_token(token_type t) {
 
 void function_decl() {
 	expect_token(TOKEN_INT_DECL);
-	if (current_token->type != TOKEN_IDENTIFIER) goto error;
-	func *function = add_function(current_token->identifier);
-	current_token += 1;
+	if (current_token().type != TOKEN_IDENTIFIER) goto error;
+	func *function = add_function(current_token().identifier);
+	advance_token();
 	if (!function) goto error;
 
 	expect_token('(');
 
 	function->locals.stack_pointer = 0;
 	function->arg_count = 0;
-	if (current_token->type == TOKEN_INT_DECL) {
-		current_token += 1;
+	if (current_token().type == TOKEN_INT_DECL) {
+		advance_token();
 
 		u32 pointer_indirections = 0;
-		while (current_token->type == '*') {
+		while (current_token().type == '*') {
 			pointer_indirections += 1;
-			current_token += 1;
+			advance_token();
 		}
 
-		if (current_token->type != TOKEN_IDENTIFIER) goto error;
+		if (current_token().type != TOKEN_IDENTIFIER) goto error;
 		function->arg_count = 1;
 		variable *args = bump_alloc(0);
-		args[0].identifier = current_token->identifier;
+		args[0].identifier = current_token().identifier;
 		args[0].addr = function->arg_count * -4;
 		args[0].pointer_indirections = 0;
-		current_token += 1;
+		advance_token();
 
-		while (current_token->type == ',') {
-			current_token += 1;
+		while (current_token().type == ',') {
+			advance_token();
 			expect_token(TOKEN_INT_DECL);
 
 			u32 pointer_indirections = 0;
-			while (current_token->type == '*') {
+			while (current_token().type == '*') {
 				pointer_indirections += 1;
-				current_token += 1;
+				advance_token();
 			}
 
-			if (current_token->type != TOKEN_IDENTIFIER) goto error;
+			if (current_token().type != TOKEN_IDENTIFIER) goto error;
 			variable *arg = args + function->arg_count;
 			function->arg_count += 1;
-			arg->identifier = current_token->identifier;
+			arg->identifier = current_token().identifier;
 			arg->addr = function->arg_count * -4;
 			arg->pointer_indirections = pointer_indirections;
-			current_token += 1;
+			advance_token();
 		}
 		function->args = args;
 		bump_alloc(sizeof(variable) * function->arg_count);
@@ -281,19 +279,19 @@ node *code_block() {
 	node head = {0};
 	node *current = &head;
 
-	while (depth > 0 && !error_occurred && current_token->type != 0) {
-		while (current_token->type == '{') {
+	while (depth > 0 && !error_occurred && current_token().type != 0) {
+		while (current_token().type == '{') {
 			++depth;
-			current_token += 1;
+			advance_token();
 		}
 
 		current->next = expr_stmt();
 		if (current->next != 0)
 			current = current->next;
 
-		while (current_token->type == '}' && depth > 0) {
+		while (current_token().type == '}' && depth > 0) {
 			--depth;
-			current_token += 1;
+			advance_token();
 		}
 	}
 
@@ -308,33 +306,33 @@ node *code_block() {
 }
 
 node *code_block_or_expr_stmt() {
-	if (current_token->type == '{') {
+	if (current_token().type == '{') {
 		return code_block();
 	}
 	return expr_stmt();
 }
 
 node *decl() {
-	if (current_token->type == TOKEN_INT_DECL) {
-		current_token += 1;
+	if (current_token().type == TOKEN_INT_DECL) {
+		advance_token();
 
 		u32 pointer_indirections = 0;
-		while (current_token->type == '*') {
+		while (current_token().type == '*') {
 			pointer_indirections += 1;
-			current_token += 1;
+			advance_token();
 		}
 
-		if (current_token->type != TOKEN_IDENTIFIER) {
+		if (current_token().type != TOKEN_IDENTIFIER) {
 			error_occurred = true;
 			return 0;
 		}
 
-		variable *var = add_variable(current_token->identifier, pointer_indirections);
+		variable *var = add_variable(current_token().identifier, pointer_indirections);
 		if (!var) {
 			error_occurred = true;
 			return 0;
 		}
-		current_token += 1;
+		advance_token();
 
 		expect_token('=');
 
@@ -353,14 +351,14 @@ node *decl() {
 
 node *expr_stmt() {
 
-	if (current_token->type == TOKEN_INT_DECL) {
+	if (current_token().type == TOKEN_INT_DECL) {
 		node *declaration = decl();
 		expect_token(';');
 		return declaration;
 	}
 
-	if (current_token->type == TOKEN_IF) {
-		current_token += 1;
+	if (current_token().type == TOKEN_IF) {
+		advance_token();
 
 		node *if_stmt = allocate_node();
 		if_stmt->type = NODE_IF;
@@ -369,27 +367,27 @@ node *expr_stmt() {
 		expect_token(')');
 		if_stmt->if_stmt.body = code_block_or_expr_stmt();
 
-		if (current_token->type == TOKEN_ELSE) {
-			current_token += 1;
+		if (current_token().type == TOKEN_ELSE) {
+			advance_token();
 			if_stmt->if_stmt.else_stmt = code_block_or_expr_stmt();
 		}
 
 		return if_stmt;
 	}
 
-	if (current_token->type == TOKEN_FOR) {
-		current_token += 1;
+	if (current_token().type == TOKEN_FOR) {
+		advance_token();
 		node *for_loop = allocate_node();
 		for_loop->type = NODE_LOOP;
 
 		expect_token('(');
-		if (current_token->type != ';')
-			for_loop->loop_stmt.start = (current_token->type == TOKEN_INT_DECL) ? decl() : expr();
+		if (current_token().type != ';')
+			for_loop->loop_stmt.start = (current_token().type == TOKEN_INT_DECL) ? decl() : expr();
 		expect_token(';');
-		if (current_token->type != ';')
+		if (current_token().type != ';')
 			for_loop->loop_stmt.condition = expr();
 		expect_token(';');
-		if (current_token->type != ')')
+		if (current_token().type != ')')
 			for_loop->loop_stmt.iteration = expr();
 		expect_token(')');
 
@@ -397,8 +395,8 @@ node *expr_stmt() {
 		return for_loop;
 	}
 
-	if (current_token->type == TOKEN_WHILE) {
-		current_token += 1;
+	if (current_token().type == TOKEN_WHILE) {
+		advance_token();
 		node *while_loop = allocate_node();
 		while_loop->type = NODE_LOOP;
 
@@ -410,8 +408,8 @@ node *expr_stmt() {
 		return while_loop;
 	}
 
-	if (current_token->type == TOKEN_DO) {
-		current_token += 1;
+	if (current_token().type == TOKEN_DO) {
+		advance_token();
 		node *while_loop = allocate_node();
 		while_loop->type = NODE_DO_WHILE;
 
@@ -426,8 +424,8 @@ node *expr_stmt() {
 		return while_loop;
 	}
 
-	if (current_token->type == TOKEN_RETURN) {
-		current_token += 1;
+	if (current_token().type == TOKEN_RETURN) {
+		advance_token();
 
 		node *return_node = allocate_node();
 		return_node->type = NODE_RETURN;
@@ -437,8 +435,8 @@ node *expr_stmt() {
 		return return_node;
 	}
 
-	if (current_token->type == ';') {
-		current_token += 1;
+	if (current_token().type == ';') {
+		advance_token();
 		return 0;
 	}
 
@@ -464,8 +462,8 @@ u32 get_precedence(node_type type) {
 }
 
 node *unary() {
-	if (current_token->type == '-') {
-		current_token += 1;
+	if (current_token().type == '-') {
+		advance_token();
 		node *primary_expr = primary();
 		if (primary_expr->type == NODE_INT) {
 			primary_expr->value *= -1;
@@ -479,19 +477,20 @@ node *unary() {
 		return unary_node;
 	}
 
-	if (current_token->type == '&' || current_token->type == '*') {
+	if (current_token().type == '&' || current_token().type == '*') {
 
 		node head = {0};
 		node *current = &head;
 
-		while (current_token->type == '*' || current_token->type == '&') {
-			if (current_token->type == '*' && (current_token + 1)->type == '&') {
-				current_token += 2;
+		while (current_token().type == '*' || current_token().type == '&') {
+			token prev_token = current_token();
+			advance_token();
+			if (prev_token.type == '*' && current_token().type == '&') {
+				advance_token();
 				continue;
 			}
 			current = current->right = allocate_node();
-			current->type = (current_token->type == '&') ? NODE_ADDRESS : NODE_DEREF;
-			current_token += 1;
+			current->type = (prev_token.type == '&') ? NODE_ADDRESS : NODE_DEREF;
 		}
 		current->right = primary();
 
@@ -503,26 +502,27 @@ node *unary() {
 
 node *primary() {
 
-	if (current_token->type == '(') {
-		current_token += 1;
+	if (current_token().type == '(') {
+		advance_token();
 		node *primary_node = expr();
 		expect_token(')');
 		return primary_node;
 	}
 
-	if (current_token->type == TOKEN_IDENTIFIER) {
-		if ((current_token + 1)->type != '(') {
-			variable *var = find_variable(current_token->identifier);
+	if (current_token().type == TOKEN_IDENTIFIER) {
+		token identifier_token = current_token();
+		advance_token();
+		if (current_token().type != '(') {
+			variable *var = find_variable(identifier_token.identifier);
 			if (!var) goto error;
 
 			node *primary_node = allocate_node();
 			primary_node->type = NODE_VAR;
 			primary_node->var.addr = var->addr;
 			primary_node->var.pointer_indirections = var->pointer_indirections;
-			current_token += 1;
 			return primary_node;
 		} else {
-			func *f = find_function(current_token->identifier);
+			func *f = find_function(identifier_token.identifier);
 			if (!f) goto error;
 
 			node *function_call = allocate_node();
@@ -530,7 +530,6 @@ node *primary() {
 			function_call->func_call.stack_pointer = current_function->locals.stack_pointer;
 			function_call->func_call.index = f->func_idx;
 
-			current_token += 1;
 			expect_token('(');
 
 			if (f->arg_count) {
@@ -541,9 +540,9 @@ node *primary() {
 
 				function_call->func_call.args = current;
 
-				while (!error_occurred && arg_count < f->arg_count && current_token->type == ',') {
+				while (!error_occurred && arg_count < f->arg_count && current_token().type == ',') {
 					arg_count += 1;
-					current_token += 1;
+					advance_token();
 					current = expr();
 					current->next = function_call->func_call.args;
 					function_call->func_call.args = current;
@@ -558,11 +557,11 @@ node *primary() {
 		}
 	}
 
-	if (current_token->type == TOKEN_INT) {
+	if (current_token().type == TOKEN_INT) {
 		node *primary_node = allocate_node();
 		primary_node->type = NODE_INT;
-		primary_node->value = current_token->value;
-		current_token += 1;
+		primary_node->value = current_token().value;
+		advance_token();
 		return primary_node;
 	}
 
@@ -637,47 +636,47 @@ node *expr() {
 	while (!error_occurred) {
 		node_type type = 0;
 
-		if (current_token->type == '+') {
+		if (current_token().type == '+') {
 			type = NODE_PLUS;
 		}
 
-		if (current_token->type == '-') {
+		if (current_token().type == '-') {
 			type = NODE_MINUS;
 		}
 
-		if (current_token->type == '*') {
+		if (current_token().type == '*') {
 			type = NODE_MULTIPLY;
 		}
 
-		if (current_token->type == '/') {
+		if (current_token().type == '/') {
 			type = NODE_DIVIDE;
 		}
 
-		if (current_token->type == TOKEN_EQ) {
+		if (current_token().type == TOKEN_EQ) {
 			type = NODE_EQ;
 		}
 
-		if (current_token->type == TOKEN_NE) {
+		if (current_token().type == TOKEN_NE) {
 			type = NODE_NE;
 		}
 
-		if (current_token->type == '<') {
+		if (current_token().type == '<') {
 			type = NODE_LT;
 		}
 
-		if (current_token->type == '>') {
+		if (current_token().type == '>') {
 			type = NODE_GT;
 		}
 
-		if (current_token->type == TOKEN_LE) {
+		if (current_token().type == TOKEN_LE) {
 			type = NODE_LE;
 		}
 
-		if (current_token->type == TOKEN_GE) {
+		if (current_token().type == TOKEN_GE) {
 			type = NODE_GE;
 		}
 
-		if (current_token->type == '=') {
+		if (current_token().type == '=') {
 			type = NODE_ASSIGN;
 		}
 
@@ -727,7 +726,7 @@ node *expr() {
 		new_node->type = type;
 		new_node->next = op_stack;
 		op_stack = new_node;
-		current_token += 1;
+		advance_token();
 
 		node *primary_node = unary();
 		primary_node->next = primary_stack;

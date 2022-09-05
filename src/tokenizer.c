@@ -12,13 +12,27 @@ bool startswith(char *a, char *b, u32 length) {
 	return true;
 }
 
-token_list tokenize(char *code, u32 length) {
+static char *c;
+static char *src;
+static u32 code_length;
+static u32 line_number;
+static token _current_token;
 
-	token *tokens = bump_alloc(0);
-	u32 token_count = 0;
+void tokenizer_init(char *code, u32 length) {
+	c = src = code;
+	code_length = length;
+	line_number = 1;
+	advance_token();
+}
 
-	for (char *c = code; c - code < length; ++c) {
+token current_token() {
+	return _current_token;
+}
 
+void advance_token() {
+	for (; c - src < code_length; c += 1) {
+
+		if (*c == '\n') line_number += 1;
 		if (is_whitespace(*c)) continue;
 
 		if (*c == '/' && *(c + 1) == '/') {
@@ -31,125 +45,102 @@ token_list tokenize(char *code, u32 length) {
 		if (*c == '/' && *(c + 1) == '*') {
 			c += 2;
 			while (*c && *c != '*' && *(c + 1) != '/') c += 1;
-			// TODO: error detection
 			c += 1;
 			continue;
 		}
 
-		token *current_token = tokens + token_count;
-		current_token->type = *c;
-
-		if (is_digit(*c)) {
-			current_token->type = TOKEN_INT;
-			current_token->value = 0;
-			do {
-				current_token->value *= 10;
-				current_token->value += *c - '0';
-				c += 1;
-			} while (is_digit(*c));
-			c -= 1;
-			token_count += 1;
-			continue;
-		}
-
-		if (is_alpha(*c)) {
-			current_token->type = TOKEN_IDENTIFIER;
-			u32 length = 1;
-			char *start = c;
-			current_token->identifier.name = start; // TODO: make cache efficient
-			c += 1;
-
-			while (is_alpha_numeric(*c)) {
-				length += 1;
-				c += 1;
-			}
-			c -= 1;
-
-			current_token->identifier.length = length;
-
-			// TODO: keyword binary search
-			if (length == 2 && startswith(start, "if", 2)) {
-				current_token->type = TOKEN_IF;
-				token_count += 1;
-				continue;
-			}
-
-			if (length == 2 && startswith(start, "do", 2)) {
-				current_token->type = TOKEN_DO;
-				token_count += 1;
-				continue;
-			}
-
-			if (length == 3 && startswith(start, "int", 3)) {
-				current_token->type = TOKEN_INT_DECL;
-				token_count += 1;
-				continue;
-			}
-
-			if (length == 3 && startswith(start, "for", 3)) {
-				current_token->type = TOKEN_FOR;
-				token_count += 1;
-				continue;
-			}
-
-			if (length == 4 && startswith(start, "else", 4)) {
-				current_token->type = TOKEN_ELSE;
-				token_count += 1;
-				continue;
-			}
-
-			if (length == 5 && startswith(start, "while", 5)) {
-				current_token->type = TOKEN_WHILE;
-				token_count += 1;
-				continue;
-			}
-
-			if (length == 6 && startswith(start, "return", 6)) {
-				current_token->type = TOKEN_RETURN;
-				token_count += 1;
-				continue;
-			}
-
-			token_count += 1;
-			continue;
-		}
-
-		if (startswith(c, "==", 2)) {
-			current_token->type = TOKEN_EQ;
-			c += 1;
-			token_count += 1;
-			continue;
-		}
-
-		if (startswith(c, "!=", 2)) {
-			current_token->type = TOKEN_NE;
-			c += 1;
-			token_count += 1;
-			continue;
-		}
-
-		if (startswith(c, ">=", 2)) {
-			current_token->type = TOKEN_GE;
-			c += 1;
-			token_count += 1;
-			continue;
-		}
-
-		if (startswith(c, "<=", 2)) {
-			current_token->type = TOKEN_LE;
-			c += 1;
-			token_count += 1;
-			continue;
-		}
-
-		token_count += 1;
+		break;
 	}
 
-	token_count += 1;
+	_current_token = (token){0};
+	_current_token.type = *c;
 
-	bump_alloc(token_count * sizeof(token));
-	token *last_token = bump_alloc(sizeof(token));
-	last_token->type = 0;
+	if (is_digit(*c)) {
+		_current_token.type = TOKEN_INT;
+		_current_token.value = 0;
+		do {
+			_current_token.value *= 10;
+			_current_token.value += *c - '0';
+			c += 1;
+		} while (is_digit(*c));
+		return;
+	}
 
-	return (token_list){ tokens, token_count };
-};
+	if (is_alpha(*c)) {
+		_current_token.type = TOKEN_IDENTIFIER;
+		u32 length = 1;
+		char *start = c;
+		_current_token.identifier.name = start; // TODO: make cache efficient
+		c += 1;
+
+		while (is_alpha_numeric(*c)) {
+			length += 1;
+			c += 1;
+		}
+
+		_current_token.identifier.length = length;
+
+		if (length == 2 && startswith(start, "if", 2)) {
+			_current_token.type = TOKEN_IF;
+			return;
+		}
+
+		if (length == 2 && startswith(start, "do", 2)) {
+			_current_token.type = TOKEN_DO;
+			return;
+		}
+
+		if (length == 3 && startswith(start, "int", 3)) {
+			_current_token.type = TOKEN_INT_DECL;
+			return;
+		}
+
+		if (length == 3 && startswith(start, "for", 3)) {
+			_current_token.type = TOKEN_FOR;
+			return;
+		}
+
+		if (length == 4 && startswith(start, "else", 4)) {
+			_current_token.type = TOKEN_ELSE;
+			return;
+		}
+
+		if (length == 5 && startswith(start, "while", 5)) {
+			_current_token.type = TOKEN_WHILE;
+			return;
+		}
+
+		if (length == 6 && startswith(start, "return", 6)) {
+			_current_token.type = TOKEN_RETURN;
+			return;
+		}
+
+		return;
+	}
+
+	if (startswith(c, "==", 2)) {
+		_current_token.type = TOKEN_EQ;
+		c += 2;
+		return;
+	}
+
+	if (startswith(c, "!=", 2)) {
+		_current_token.type = TOKEN_NE;
+		c += 2;
+		return;
+	}
+
+	if (startswith(c, ">=", 2)) {
+		_current_token.type = TOKEN_GE;
+		c += 2;
+		return;
+	}
+
+	if (startswith(c, "<=", 2)) {
+		_current_token.type = TOKEN_LE;
+		c += 2;
+		return;
+	}
+
+	c += 1;
+}

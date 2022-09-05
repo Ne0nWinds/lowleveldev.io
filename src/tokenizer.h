@@ -38,4 +38,6 @@ struct token_list {
 	u32 count;
 };
 
-token_list tokenize(char *code, u32 length);
+void tokenizer_init(char *code, u32 length);
+token current_token();
+void advance_token();
