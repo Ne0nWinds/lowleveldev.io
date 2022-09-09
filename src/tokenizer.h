@@ -22,22 +22,30 @@ enum token_type {
 	TOKEN_GE,
 };
 
+typedef enum identifier_type identifier_type;
+enum identifier_type {
+	IDENTIFIER_FUNC,
+	IDENTIFIER_VAR,
+	IDENTIFIER_PARAM
+};
+
 typedef struct token token;
 typedef struct token_list token_list;
 
 struct token {
 	u32 type;
+	u32 line_number;
 	union {
 		u32 value;
 		identifier identifier;
 	};
 };
 
-struct token_list {
-	token *tokens;
-	u32 count;
-};
-
 void tokenizer_init(char *code, u32 length);
 token current_token();
 void advance_token();
+void unexpected_token_error(token_type t);
+void expected_identifier(identifier_type type);
+void redeclaration_error(identifier_type type);
+void not_found_error(identifier_type type);
+void set_error_msg(char *format_str, ...);

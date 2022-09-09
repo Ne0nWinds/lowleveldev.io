@@ -207,17 +207,43 @@ func *parse_tokens(u32 *function_count) {
 void expect_token(token_type t) {
 	if (current_token().type == t) {
 		advance_token();
-	} else {
-		error_occurred = true;
+		return;
 	}
+
+	if (!error_occurred) {
+		const char *value = 0;
+		switch (t) {
+			case TOKEN_INT: value = "an integer"; break;
+			case TOKEN_INT_DECL: value = "the word 'int'"; break;
+			case TOKEN_WHILE: value = "the word 'while'"; break;
+			default: {
+				char str[2] = {0};
+				str[0] = t;
+				str[1] = 0;
+				value = str;
+				break;
+			}
+		}
+		set_error_msg("Expected %s on line %l", value);
+	}
+	error_occurred = true;
 }
 
 void function_decl() {
 	expect_token(TOKEN_INT_DECL);
-	if (current_token().type != TOKEN_IDENTIFIER) goto error;
+	if (current_token().type != TOKEN_IDENTIFIER) {
+		error_occurred = true;
+		expected_identifier(IDENTIFIER_FUNC);
+		return;
+	}
 	func *function = add_function(current_token().identifier);
+	if (!function) {
+		error_occurred = true;
+		redeclaration_error(IDENTIFIER_FUNC);
+		return;
+	}
+
 	advance_token();
-	if (!function) goto error;
 
 	expect_token('(');
 
@@ -232,7 +258,11 @@ void function_decl() {
 			advance_token();
 		}
 
-		if (current_token().type != TOKEN_IDENTIFIER) goto error;
+		if (current_token().type != TOKEN_IDENTIFIER) {
+			error_occurred = true;
+			expected_identifier(IDENTIFIER_PARAM);
+			return;
+		}
 		function->arg_count = 1;
 		variable *args = bump_alloc(0);
 		args[0].identifier = current_token().identifier;
@@ -250,7 +280,12 @@ void function_decl() {
 				advance_token();
 			}
 
-			if (current_token().type != TOKEN_IDENTIFIER) goto error;
+			if (current_token().type != TOKEN_IDENTIFIER) {
+				error_occurred = true;
+				expected_identifier(IDENTIFIER_PARAM);
+				return;
+			}
+
 			variable *arg = args + function->arg_count;
 			function->arg_count += 1;
 			arg->identifier = current_token().identifier;
@@ -267,8 +302,6 @@ void function_decl() {
 	current_function = function;
 	function->body = code_block();
 	return;
-error:
-	error_occurred = true;
 }
 
 node *code_block() {
@@ -295,7 +328,8 @@ node *code_block() {
 		}
 	}
 
-	if (depth != 0) {
+	if (depth != 0 && !error_occurred) {
+		set_error_msg("Bracket mismatch on line %l");
 		error_occurred = true;
 		return 0;
 	}
@@ -324,12 +358,14 @@ node *decl() {
 
 		if (current_token().type != TOKEN_IDENTIFIER) {
 			error_occurred = true;
+			expected_identifier(IDENTIFIER_VAR);
 			return 0;
 		}
 
 		variable *var = add_variable(current_token().identifier, pointer_indirections);
 		if (!var) {
 			error_occurred = true;
+			redeclaration_error(IDENTIFIER_VAR);
 			return 0;
 		}
 		advance_token();
@@ -514,7 +550,11 @@ node *primary() {
 		advance_token();
 		if (current_token().type != '(') {
 			variable *var = find_variable(identifier_token.identifier);
-			if (!var) goto error;
+			if (!var) {
+				error_occurred = true;
+				not_found_error(IDENTIFIER_VAR);
+				return 0;
+			}
 
 			node *primary_node = allocate_node();
 			primary_node->type = NODE_VAR;
@@ -523,7 +563,11 @@ node *primary() {
 			return primary_node;
 		} else {
 			func *f = find_function(identifier_token.identifier);
-			if (!f) goto error;
+			if (!f) {
+				error_occurred = true;
+				not_found_error(IDENTIFIER_FUNC);
+				return 0;
+			}
 
 			node *function_call = allocate_node();
 			function_call->type = NODE_FUNC_CALL;
@@ -540,7 +584,7 @@ node *primary() {
 
 				function_call->func_call.args = current;
 
-				while (!error_occurred && arg_count < f->arg_count && current_token().type == ',') {
+				while (!error_occurred && current_token().type == ',') {
 					arg_count += 1;
 					advance_token();
 					current = expr();
@@ -548,7 +592,14 @@ node *primary() {
 					function_call->func_call.args = current;
 				}
 
-				if (arg_count != f->arg_count) goto error;
+				if (arg_count != f->arg_count) {
+					error_occurred = true;
+					set_error_msg("function %i called with incorrect number of arguments on line %l\nRequires %d arguments, but %d were given",
+							identifier_token.identifier,
+							f->arg_count,
+							arg_count);
+					return 0;
+				}
 			}
 
 			expect_token(')');
@@ -565,8 +616,10 @@ node *primary() {
 		return primary_node;
 	}
 
-error:
-	error_occurred = true;
+	if (!error_occurred) {
+		set_error_msg("Invalid expression on line: %l");
+		error_occurred = true;
+	}
 	return 0;
 }
 
@@ -636,48 +689,18 @@ node *expr() {
 	while (!error_occurred) {
 		node_type type = 0;
 
-		if (current_token().type == '+') {
-			type = NODE_PLUS;
-		}
-
-		if (current_token().type == '-') {
-			type = NODE_MINUS;
-		}
-
-		if (current_token().type == '*') {
-			type = NODE_MULTIPLY;
-		}
-
-		if (current_token().type == '/') {
-			type = NODE_DIVIDE;
-		}
-
-		if (current_token().type == TOKEN_EQ) {
-			type = NODE_EQ;
-		}
-
-		if (current_token().type == TOKEN_NE) {
-			type = NODE_NE;
-		}
-
-		if (current_token().type == '<') {
-			type = NODE_LT;
-		}
-
-		if (current_token().type == '>') {
-			type = NODE_GT;
-		}
-
-		if (current_token().type == TOKEN_LE) {
-			type = NODE_LE;
-		}
-
-		if (current_token().type == TOKEN_GE) {
-			type = NODE_GE;
-		}
-
-		if (current_token().type == '=') {
-			type = NODE_ASSIGN;
+		switch (current_token().type) {
+			case '+': 		type = NODE_PLUS; break;
+			case '-': 		type = NODE_MINUS; break;
+			case '*': 		type = NODE_MULTIPLY; break;
+			case '/': 		type = NODE_DIVIDE; break;
+			case TOKEN_EQ: 	type = NODE_EQ; break;
+			case TOKEN_NE: 	type = NODE_NE; break;
+			case '<': 		type = NODE_LT; break;
+			case '>': 		type = NODE_GT; break;
+			case TOKEN_LE: 	type = NODE_LE; break;
+			case TOKEN_GE: 	type = NODE_GE; break;
+			case '=': 		type = NODE_ASSIGN; break;
 		}
 
 		if (!type) break;

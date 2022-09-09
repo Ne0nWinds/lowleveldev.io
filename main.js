@@ -18,7 +18,11 @@ const compile = (text) => {
 	const start = window.performance.now();
 	const compile_result_ptr = compiler.compile(code_ptr, u8Array.byteLength);
 	compile_times.push(window.performance.now() - start);
-	if (!compile_result_ptr) return null;
+	if (!compile_result_ptr) {
+		const error_msg = new Uint8Array(compiler.memory.buffer, compiler.get_error_msg(), compiler.get_error_msg_len());
+		const text_decoder = new TextDecoder('utf-8');
+		throw text_decoder.decode(error_msg);
+	}
 
 	const compile_result = new Uint32Array(compiler.memory.buffer, compile_result_ptr, 2);
 	code_size.push(compile_result[0]);
@@ -495,14 +499,39 @@ int main() {
 int main() {
 	return function1();
 }`,
+`
+int test() {
+	return 1;
+}
+
+int test() {
+	return 5;
+}
+
+int main() {
+	test();
+}`,
+`int x(int a, int b) {
+	return a + b;
+}
+int main() {
+	return x(5,10,15);
+}`
 	];
 
 	test_case_failure = false;
-	for (let i = 0; i < error_test_cases.length; ++i) {
-		const output = compile(error_test_cases[i]);
-		if (output != null) {
+	for (let i = 0; i < error_test_cases.length && !test_case_failure; ++i) {
+		try {
+			const output = compile(error_test_cases[i]);
+			test_case_failure = true;
 			console.log(`error test case failed\n${error_test_cases[i]}`);
 			test_case_failure = true;
+		} catch (e) {
+			console.log(e);
+			if (e == "") {
+				console.log(`error test case failed\nno error msg\n${error_test_cases[i]}`);
+				test_case_failure = true;
+			}
 		}
 	}
 	if (!test_case_failure) {
