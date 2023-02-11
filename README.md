@@ -12,7 +12,7 @@ This is the future home of a low level programming tutorial series using a custo
 ## Current compiler features:
 - Math expressions with correct order of operations
 - Variables with integer and pointer types
-- If statments
+- If statements
 - For, while, and do..while loops
 - Functions with parameters
 - Recursion / call stack
